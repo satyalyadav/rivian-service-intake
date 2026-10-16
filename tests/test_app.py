@@ -61,17 +61,64 @@ def test_analyze_click_replaces_saved_write_up(monkeypatch) -> None:
     assert _write_up_present(at)
 
 
-def test_transcript_and_vehicle_edits_hide_the_old_write_up() -> None:
+def test_conversation_edits_hide_the_old_write_up() -> None:
     at = _run_app()
     assert _write_up_present(at)
 
     at.toggle(key="editing").set_value(True).run()
     at.text_area(key="transcript_editor").set_value("Customer: I hear a changed sound.")
-    at.text_input(key="veh_mileage").set_value("29999")
     at.run()
 
     assert not _write_up_present(at)
     assert any("The conversation changed." in item.value for item in at.warning)
+
+
+def test_failed_source_check_runs_one_retry(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+    calls = {"count": 0}
+
+    def mock_request(**_kwargs):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return {
+                "facts": [{
+                    "id": "F1",
+                    "field": "noise",
+                    "value": "humming",
+                    "evidence": [{
+                        "turn_id": "T2",
+                        "speaker": "Customer",
+                        "quote": "creaking sound",
+                    }],
+                }],
+                "corrections": [],
+                "conflicts": [],
+                "questions": [],
+            }
+        return {
+            "facts": [{
+                "id": "F1",
+                "field": "noise",
+                "value": "creaking sound",
+                "evidence": [{
+                    "turn_id": "T2",
+                    "speaker": "Customer",
+                    "quote": "creaking sound",
+                }],
+            }],
+            "corrections": [],
+            "conflicts": [],
+            "questions": [],
+        }
+
+    monkeypatch.setattr(api, "request_extraction", mock_request)
+    at = _run_app()
+    at.toggle(key="editing").set_value(True).run()
+    at.button(key="analyze").click().run()
+
+    assert calls["count"] == 2
+    assert at.session_state["result"]["valid"] is True
+    assert _write_up_present(at)
 
 
 def test_invalid_saved_quote_displays_error_without_a_write_up(monkeypatch) -> None:
@@ -115,6 +162,44 @@ def test_http_500_shows_safe_error_and_removes_the_saved_write_up(monkeypatch) -
     assert any("provider returned HTTP 500" in item.value for item in at.error)
     assert all("test-only-secret" not in item.value for item in at.error)
     assert any("Analysis could not finish" in item.value for item in at.markdown)
+
+
+def test_edited_flow_keeps_the_fresh_write_up_after_clicking_a_source(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+
+    def mock_request(**_kwargs):
+        return {
+            "facts": [{
+                "id": "F1",
+                "field": "conditions",
+                "value": "worse in the evenings",
+                "evidence": [{
+                    "turn_id": "T4",
+                    "speaker": "Customer",
+                    "quote": "worse in the evenings",
+                }],
+            }],
+            "corrections": [],
+            "conflicts": [],
+            "questions": [],
+        }
+
+    monkeypatch.setattr(api, "request_extraction", mock_request)
+    at = _run_app()
+    at.toggle(key="editing").set_value(True).run()
+    edited = at.session_state["transcript_editor"].replace(
+        "worse in the mornings", "worse in the evenings"
+    )
+    at.text_area(key="transcript_editor").set_value(edited)
+    at.button(key="analyze").click().run()
+
+    assert at.session_state["result_kind"] == "fresh"
+    assert _write_up_present(at)
+
+    at.button(key="hl-fact-0").click().run()
+
+    assert not any("The conversation changed" in item.value for item in at.warning)
+    assert _write_up_present(at)
 
 
 def test_source_button_highlights_the_quote_in_the_conversation() -> None:
