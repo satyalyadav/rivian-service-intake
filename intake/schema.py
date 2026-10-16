@@ -99,12 +99,12 @@ def validate_extraction(
         extraction = Extraction.model_validate(candidate)
     except ValidationError as exc:
         raise OutputValidationError(
-            "The model response did not match the required structured format. No handoff was generated."
+            "The model response did not match the required structured format. No write-up was generated."
         ) from exc
 
     expected_fact_ids = [f"F{index}" for index in range(1, len(extraction.facts) + 1)]
     if [fact.id for fact in extraction.facts] != expected_fact_ids:
-        raise OutputValidationError("Fact identifiers were incomplete or repeated. No handoff was generated.")
+        raise OutputValidationError("Fact identifiers were incomplete or repeated. No write-up was generated.")
 
     turn_index = {turn["id"]: turn for turn in turns}
 
@@ -115,7 +115,7 @@ def validate_extraction(
             turn = turn_index.get(item.turn_id)
             if turn is None or item.speaker != turn["speaker"] or item.quote not in turn["text"]:
                 raise OutputValidationError(
-                    f"Evidence for {owner} must quote the named speaker and turn exactly. No handoff was generated."
+                    f"Evidence for {owner} must quote the named speaker and turn exactly. No write-up was generated."
                 )
             ref = (item.turn_id, item.speaker, item.quote)
             if ref not in seen:
@@ -128,7 +128,7 @@ def validate_extraction(
         evidence = check_evidence(fact.evidence, owner=fact.id)
         if not any(value_matches_quote(fact.field, fact.value, item.quote) for item in evidence):
             raise OutputValidationError(
-                f"Evidence for {fact.id} does not contain its reported value. No handoff was generated."
+                f"Evidence for {fact.id} does not contain its reported value. No write-up was generated."
             )
         fact_fields[fact.field].append(fact)
 
@@ -136,11 +136,11 @@ def validate_extraction(
     for correction in extraction.corrections:
         evidence = check_evidence(correction.evidence, owner=correction.field)
         if correction.previous_value == correction.current_value:
-            raise OutputValidationError("A correction must change the reported value. No handoff was generated.")
+            raise OutputValidationError("A correction must change the reported value. No write-up was generated.")
         references = {(item.turn_id, item.speaker, item.quote) for item in evidence}
         if len(references) < 2:
             raise OutputValidationError(
-                "A correction must preserve both source statements. No handoff was generated."
+                "A correction must preserve both source statements. No write-up was generated."
             )
         if not any(
             value_matches_quote(correction.field, correction.previous_value, item.quote)
@@ -150,7 +150,7 @@ def validate_extraction(
             for item in evidence
         ):
             raise OutputValidationError(
-                "A correction must quote both the previous and current values. No handoff was generated."
+                "A correction must quote both the previous and current values. No write-up was generated."
             )
         previous_positions = _value_source_positions(
             correction.field, correction.previous_value, evidence, turns
@@ -160,56 +160,56 @@ def validate_extraction(
         )
         if min(previous_positions) >= max(current_positions):
             raise OutputValidationError(
-                "Correction history is out of order. No handoff was generated."
+                "Correction history is out of order. No write-up was generated."
             )
         correction_fields[correction.field].append(correction)
 
     conflict_fields: dict[str, ConflictCandidate] = {}
     for conflict in extraction.conflicts:
         if conflict.field in conflict_fields:
-            raise OutputValidationError("A field has repeated unresolved conflicts. No handoff was generated.")
+            raise OutputValidationError("A field has repeated unresolved conflicts. No write-up was generated.")
         evidence = check_evidence(conflict.evidence, owner=conflict.field)
         unique_values = set(conflict.values)
         references = {(item.turn_id, item.speaker, item.quote) for item in evidence}
         if len(unique_values) != len(conflict.values) or len(references) < 2:
             raise OutputValidationError(
-                "A conflict must preserve distinct values and at least two source statements. No handoff was generated."
+                "A conflict must preserve distinct values and at least two source statements. No write-up was generated."
             )
         if any(
             not any(value_matches_quote(conflict.field, value, item.quote) for item in evidence)
             for value in conflict.values
         ):
             raise OutputValidationError(
-                "Evidence for a conflict must contain each reported value. No handoff was generated."
+                "Evidence for a conflict must contain each reported value. No write-up was generated."
             )
         conflict_fields[conflict.field] = conflict
 
     if set(correction_fields) & set(conflict_fields):
         raise OutputValidationError(
-            "A field cannot be both corrected and unresolved. No handoff was generated."
+            "A field cannot be both corrected and unresolved. No write-up was generated."
         )
     if set(fact_fields) & set(conflict_fields):
         raise OutputValidationError(
-            "An unresolved field cannot also have a resolved fact. No handoff was generated."
+            "An unresolved field cannot also have a resolved fact. No write-up was generated."
         )
 
     for field, corrections in correction_fields.items():
         for previous, current in zip(corrections, corrections[1:]):
             if previous.current_value != current.previous_value:
                 raise OutputValidationError(
-                    "Correction history is out of order. No handoff was generated."
+                    "Correction history is out of order. No write-up was generated."
                 )
         facts = fact_fields.get(field, [])
         if not facts or any(fact.value != corrections[-1].current_value for fact in facts):
             raise OutputValidationError(
-                "The current fact does not match the last correction. No handoff was generated."
+                "The current fact does not match the last correction. No write-up was generated."
             )
 
     for field, facts in fact_fields.items():
         values = {fact.value for fact in facts}
         if len(values) > 1 and field in SINGLE_VALUE_FIELDS and field not in correction_fields:
             raise OutputValidationError(
-                "Disagreeing values must remain unresolved as a conflict. No handoff was generated."
+                "Disagreeing values must remain unresolved as a conflict. No write-up was generated."
             )
 
     filtered_questions = _remove_questions_answered_by_vehicle(extraction.questions, vehicle)

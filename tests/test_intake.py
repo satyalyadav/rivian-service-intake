@@ -160,7 +160,7 @@ def test_renderer_attributes_mileage_to_a_quote_with_the_full_value() -> None:
     )
 
     assert result["valid"]
-    assert '- Mileage: "8,000 miles" (Customer, T2)' in result["handoff"]
+    assert '- Mileage: "8,000 miles" (Customer, line 2)' in result["handoff"]
 
 
 def test_correction_with_reversed_source_chronology_is_rejected() -> None:
@@ -260,7 +260,7 @@ def test_multiple_independent_concerns_can_share_a_field() -> None:
     assert [fact["value"] for fact in result["facts"]] == ["clunk", "rattle"]
 
 
-def test_handoff_attributes_value_to_evidence_that_contains_it() -> None:
+def test_write_up_attributes_value_to_evidence_that_contains_it() -> None:
     transcript = "Customer: I drive an R1T.\nAdvisor: You also mentioned a whine."
     saved = {
         "facts": [{
@@ -280,7 +280,7 @@ def test_handoff_attributes_value_to_evidence_that_contains_it() -> None:
     result = process_intake(transcript, {}, saved_result=saved)
 
     assert result["valid"]
-    assert '- Noise: "whine" (Advisor, T2)' in result["handoff"]
+    assert '- Noise: "whine" (Advisor, line 2)' in result["handoff"]
 
 
 def test_known_vin_filter_does_not_drop_questions_about_driving() -> None:

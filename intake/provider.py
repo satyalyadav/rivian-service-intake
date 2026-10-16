@@ -180,7 +180,7 @@ def request_extraction(
                     response_bytes.extend(chunk)
                     if len(response_bytes) > MAX_PROVIDER_RESPONSE_BYTES:
                         raise ProviderError(
-                            "The model response exceeded the size limit. No handoff was generated."
+                            "The model response exceeded the size limit. No write-up was generated."
                         )
     except ProviderError:
         raise
@@ -200,17 +200,17 @@ def request_extraction(
         content = message["content"]
     except (json.JSONDecodeError, KeyError, IndexError, TypeError):
         raise ProviderError(
-            "The model provider returned an invalid response. No handoff was generated."
+            "The model provider returned an invalid response. No write-up was generated."
         ) from None
 
     finish_reason = choice.get("finish_reason")
     if finish_reason == "length":
         raise ProviderError(
-            "The model response reached its output limit before completion. No handoff was generated."
+            "The model response reached its output limit before completion. No write-up was generated."
         )
     if not isinstance(content, str) or not content.strip():
         raise ProviderError(
-            "The model provider returned no content. No handoff was generated."
+            "The model provider returned no content. No write-up was generated."
         )
     return parse_model_content(content)
 
@@ -222,7 +222,7 @@ def parse_model_content(content: str) -> Extraction:
         match = re.fullmatch(r"```json[ \t]*\r?\n(.*?)\r?\n```", text, flags=re.IGNORECASE | re.DOTALL)
         if match is None:
             raise OutputValidationError(
-                "The model response must be one JSON object. No handoff was generated."
+                "The model response must be one JSON object. No write-up was generated."
             )
         text = match.group(1).strip()
 
@@ -230,7 +230,7 @@ def parse_model_content(content: str) -> Extraction:
         decoded = json.loads(text)
     except json.JSONDecodeError:
         raise OutputValidationError(
-            "The model response was not valid JSON. No handoff was generated."
+            "The model response was not valid JSON. No write-up was generated."
         ) from None
 
     try:
@@ -238,5 +238,5 @@ def parse_model_content(content: str) -> Extraction:
     except ValidationError as exc:
         # The shared validator reports the safe structured-output error to the caller.
         raise OutputValidationError(
-            "The model response did not match the required structured format. No handoff was generated."
+            "The model response did not match the required structured format. No write-up was generated."
         ) from exc

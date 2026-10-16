@@ -18,7 +18,15 @@ def _run_app() -> AppTest:
     return AppTest.from_file(APP_PATH, default_timeout=8).run()
 
 
-def test_analyze_click_replaces_saved_note_without_another_interaction(monkeypatch) -> None:
+def _write_up_present(at: AppTest) -> bool:
+    return any("SERVICE INTAKE DRAFT" in str(item.value) for item in at.get("html"))
+
+
+def _conversation_html(at: AppTest) -> str:
+    return "".join(str(item.value) for item in at.get("html"))
+
+
+def test_analyze_click_replaces_saved_write_up(monkeypatch) -> None:
     monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
 
     def mock_request(**_kwargs):
@@ -40,42 +48,44 @@ def test_analyze_click_replaces_saved_note_without_another_interaction(monkeypat
 
     monkeypatch.setattr(api, "request_extraction", mock_request)
     at = _run_app()
-    at.session_state["last_analyze_ts"] = 0.0
+    assert _write_up_present(at)
 
+    at.toggle(key="editing").set_value(True).run()
     at.button(key="analyze").click().run()
 
     assert at.session_state["result_kind"] == "fresh"
-    assert any("Fresh model result" in item.value for item in at.markdown)
-    assert len(at.code) == 1
-    assert "Concern: \"grinding noise when I turn left slowly\"" in at.code[0].value
-    assert "Noise:" not in at.code[0].value
+    write_up = at.session_state["result"]["handoff"]
+    assert 'Concern: "grinding noise when I turn left slowly"' in write_up
+    assert "Noise:" not in write_up
+    assert _write_up_present(at)
 
 
-def test_transcript_and_vehicle_edits_hide_the_old_handoff() -> None:
+def test_transcript_and_vehicle_edits_hide_the_old_write_up() -> None:
     at = _run_app()
-    assert len(at.code) == 1
+    assert _write_up_present(at)
 
+    at.toggle(key="editing").set_value(True).run()
     at.text_area(key="transcript_editor").set_value("Customer: I hear a changed sound.")
     at.text_input(key="veh_mileage").set_value("29999")
     at.run()
 
-    assert len(at.code) == 0
-    assert any("Inputs changed since this result." in item.value for item in at.warning)
+    assert not _write_up_present(at)
+    assert any("The conversation changed." in item.value for item in at.warning)
 
 
-def test_invalid_saved_quote_displays_error_without_a_handoff(monkeypatch) -> None:
+def test_invalid_saved_quote_displays_error_without_a_write_up(monkeypatch) -> None:
     altered_examples = deepcopy(examples)
     altered_examples[0]["result"]["facts"][0]["evidence"][0]["quote"] = "quote absent from the transcript"
     monkeypatch.setattr(api, "list_examples", lambda: deepcopy(altered_examples))
 
     at = _run_app()
 
-    assert len(at.code) == 0
+    assert not _write_up_present(at)
     assert any("Evidence" in item.value for item in at.error)
-    assert any("No handoff generated." in item.value for item in at.caption)
+    assert any("Analysis could not finish" in item.value for item in at.markdown)
 
 
-def test_http_500_shows_safe_error_and_removes_the_saved_handoff(monkeypatch) -> None:
+def test_http_500_shows_safe_error_and_removes_the_saved_write_up(monkeypatch) -> None:
     monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
     monkeypatch.setenv("INTAKE_PROCESS_REQUEST_LIMIT", "2")
     monkeypatch.setattr(provider, "_request_count", 0)
@@ -93,18 +103,27 @@ def test_http_500_shows_safe_error_and_removes_the_saved_handoff(monkeypatch) ->
 
     monkeypatch.setattr(provider.httpx, "Client", mock_client)
     at = _run_app()
-    assert len(at.code) == 1
-    at.session_state["last_analyze_ts"] = 0.0
+    assert _write_up_present(at)
 
+    at.toggle(key="editing").set_value(True).run()
     at.button(key="analyze").click().run()
 
     assert len(requests) == 1
     assert at.session_state["result_kind"] == "fresh"
-    assert len(at.code) == 0
+    assert not _write_up_present(at)
     assert any("provider returned HTTP 500" in item.value for item in at.error)
     assert all("test-only-secret" not in item.value for item in at.error)
     assert any("Analysis could not finish" in item.value for item in at.markdown)
-    assert not any("Fresh model result" in item.value for item in at.markdown)
+
+
+def test_source_button_highlights_the_quote_in_the_conversation() -> None:
+    at = _run_app()
+    assert "class=\"ev\"" not in _conversation_html(at)
+
+    at.button(key="hl-fact-0-0").click().run()
+
+    assert at.session_state["highlight"] == [{"turn_id": "T1", "quote": "grinding noise"}]
+    assert '<mark class="ev">grinding noise</mark>' in _conversation_html(at)
 
 
 def test_overlapping_highlights_escape_raw_text_before_marking() -> None:
