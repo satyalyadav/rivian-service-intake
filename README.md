@@ -50,7 +50,7 @@ Live mode never falls back to fixtures. See the [Promptfoo Python integration gu
 
 ## Verification
 
-The Python suite passed 54 tests. Saved fixtures passed 6 of 6 cases. In the latest live run, all six pipeline results were valid; the original assertions passed 5 of 6, then the same captured outputs passed 6 of 6 after the checker allowed expected phrases inside longer free-text fact values. That regrade made no model calls. See [evaluation results](evals/RESULTS.md) and the linked reports.
+The Python suite passed 54 tests. Saved fixtures passed 6 of 6 cases. In the latest live run, all six pipeline results were valid; the original assertions passed 5 of 6, then the same captured outputs passed 6 of 6 after the checker allowed expected phrases inside longer free-text fact values. That regrade made no model calls. The raw reports are in `evals/`.
 
 - Native T3 browser review confirmed evidence selection including both correction quotes, stale-edit removal of the handoff and download, and handoff blocking on malformed input. A fresh, unseen screen-black transcript edited with a known VIN produced a valid sourced note and three neutral questions; its 562-byte download matched the rendered note.
 - Escaped `<img>` text did not create an image or execute. A 390-pixel viewport had no horizontal overflow with a 300-character unbroken string, and Windows checks of `localhost` and `127.0.0.1` both returned HTTP 200.
