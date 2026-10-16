@@ -32,7 +32,7 @@ The app limits conversations to 12,000 characters and 100 turns. Vehicle context
 
 ## Hosting
 
-The app runs on Streamlit Community Cloud. Connect this repository, set the entry file to `app.py`, and paste the provider key into the app's secrets box:
+The app runs on Streamlit Community Cloud at <https://rivian-service-intake.streamlit.app>. Connect this repository, set the entry file to `app.py`, and paste the provider key into the app's secrets box:
 
 ```toml
 INTAKE_API_KEY = "..."
@@ -72,6 +72,7 @@ State as of 2026-10-16, on the current conversations and prompt:
 - The Python suite passed 51 tests.
 - Saved fixtures passed 4 of 4 checks. A live run of the same four cases passed 4 of 4 and is saved in `evals/results-live.json`.
 - Browser review of the deployed layout confirmed that the Streamlit toolbar and menu are hidden, the write-up renders with line references, and clicking a source quote highlights those words in the conversation.
+- The deployed app completed a live model run on an edited conversation and rendered the fresh write-up (checked 2026-10-16).
 
 Exact quote matching proves that a quote appears under the named speaker and turn; it does not prove semantic support for the extracted claim. The four conversations do not establish broad reliability or operational time savings.
 
