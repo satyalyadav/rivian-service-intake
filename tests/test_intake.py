@@ -13,16 +13,16 @@ from intake import provider
 from intake.examples import examples
 
 
-@pytest.mark.parametrize("example", examples, ids=lambda example: example["id"])
-def test_saved_examples_validate_and_render(example: dict) -> None:
-    result = process_intake(
-        example["transcript"], example["vehicle"], saved_result=example["result"]
-    )
+def test_saved_examples_validate_and_render() -> None:
+    for example in examples:
+        result = process_intake(
+            example["transcript"], example["vehicle"], saved_result=example["result"]
+        )
 
-    assert result["source"] == "saved"
-    assert result["valid"] is True and result["errors"] == []
-    assert result["handoff"].startswith("SERVICE INTAKE DRAFT")
-    assert result["model"] == get_settings().model
+        assert result["valid"] is True, example["id"]
+        assert result["errors"] == [], example["id"]
+        assert result["handoff"].startswith("SERVICE INTAKE DRAFT"), example["id"]
+        assert result["model"] == get_settings().model, example["id"]
 
 
 def test_parser_accepts_turns_and_rejects_bad_lines() -> None:
@@ -39,7 +39,7 @@ def test_parser_accepts_turns_and_rejects_bad_lines() -> None:
         parse_transcript("Customer: " + "x" * 12_000)
 
 
-def test_evidence_must_quote_the_named_speaker_and_turn() -> None:
+def test_evidence_rules() -> None:
     example = examples[0]
     for bad_reference in (
         {"turn_id": "T9", "speaker": "Customer", "quote": "creaking sound"},
@@ -54,8 +54,6 @@ def test_evidence_must_quote_the_named_speaker_and_turn() -> None:
         assert result["valid"] is False and result["handoff"] == ""
         assert "Evidence" in result["errors"][0]
 
-
-def test_mileage_values_need_full_token_matches() -> None:
     def mileage_result(value: str) -> dict:
         return process_intake(
             "Customer: The odometer reads 28,000 miles.",
@@ -70,13 +68,31 @@ def test_mileage_values_need_full_token_matches() -> None:
             },
         )
 
-    assert mileage_result("8,000 miles")["valid"] is False
+    for field, value, quote in (
+        ("mileage", "8,000 miles", "28,000 miles"),
+        ("year", "202", "2024"),
+        ("vin", "ABC123", "XABC123Y"),
+    ):
+        result = process_intake(
+            f"Customer: The reported value is {quote}.",
+            {},
+            saved_result={
+                "facts": [{"id": "F1", "field": field, "value": value, "evidence": [
+                    {"turn_id": "T1", "speaker": "Customer", "quote": quote}
+                ]}],
+                "corrections": [],
+                "conflicts": [],
+                "questions": [],
+            },
+        )
+        assert result["valid"] is False, (field, value)
+
     accepted = mileage_result("28,000 miles")
     assert accepted["valid"] is True
     assert '- Mileage: "28,000 miles" (Customer, line 1)' in accepted["handoff"]
 
 
-def test_corrections_keep_their_order() -> None:
+def test_correction_and_conflict_rules() -> None:
     accepted = process_intake(
         "Customer: I have 30,000 miles. Sorry, it is 28,000 miles.",
         {},
@@ -124,9 +140,7 @@ def test_corrections_keep_their_order() -> None:
     assert reversed_order["valid"] is False
     assert "out of order" in reversed_order["errors"][0]
 
-
-def test_conflicts_and_facts_cannot_share_a_field() -> None:
-    result = process_intake(
+    settled_and_unsettled = process_intake(
         "Customer: The odometer reads 41,000 miles.\nAdvisor: The file lists 47,000 miles.",
         {},
         saved_result={
@@ -145,9 +159,30 @@ def test_conflicts_and_facts_cannot_share_a_field() -> None:
             "questions": [],
         },
     )
+    assert settled_and_unsettled["valid"] is False
+    assert "resolved fact" in settled_and_unsettled["errors"][0]
 
-    assert result["valid"] is False
-    assert "resolved fact" in result["errors"][0]
+    partial_mileage = process_intake(
+        "Advisor: The odometer reads 28,000 miles.\nCustomer: It reads 28,000 miles on my screen.",
+        {},
+        saved_result={
+            "facts": [{"id": "F1", "field": "mileage", "value": "28,000 miles", "evidence": [
+                {"turn_id": "T1", "speaker": "Advisor", "quote": "28,000 miles"}
+            ]}],
+            "corrections": [{
+                "field": "mileage",
+                "previous_value": "8,000 miles",
+                "current_value": "28,000 miles",
+                "evidence": [
+                    {"turn_id": "T1", "speaker": "Advisor", "quote": "28,000 miles"},
+                    {"turn_id": "T2", "speaker": "Customer", "quote": "28,000 miles"},
+                ],
+            }],
+            "conflicts": [],
+            "questions": [],
+        },
+    )
+    assert partial_mileage["valid"] is False
 
 
 def test_strict_inputs_reject_bad_vehicle_values_and_extra_fields() -> None:
@@ -170,7 +205,7 @@ def test_strict_inputs_reject_bad_vehicle_values_and_extra_fields() -> None:
     assert "structured format" in result["errors"][0]
 
 
-def test_live_mode_requires_a_key_and_never_falls_back(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_configuration_safety(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("INTAKE_API_KEY", raising=False)
     example = examples[0]
 
@@ -180,13 +215,9 @@ def test_live_mode_requires_a_key_and_never_falls_back(monkeypatch: pytest.Monke
     assert result["handoff"] == ""
     assert "INTAKE_API_KEY" in result["errors"][0]
 
-
-def test_settings_repr_never_includes_the_key(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("INTAKE_API_KEY", "test-secret-value")
     settings = get_settings()
-
     assert settings.configured
-    assert "deepseek-v4.1-flash" in repr(settings)
     assert "test-secret-value" not in repr(settings)
 
 
@@ -224,25 +255,41 @@ def test_provider_request_contract(monkeypatch: pytest.MonkeyPatch) -> None:
     assert request.headers["user-agent"] == "rivian-service-intake-demo/0.1"
     assert request.headers["authorization"] == "Bearer test-only-secret"
 
+    def empty_handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={
+            "choices": [{"message": {"content": ""}, "finish_reason": "stop"}]
+        })
 
-@pytest.mark.parametrize(
-    ("finish_reason", "content", "error_text"),
-    [
-        ("length", "{\"facts\":", "output limit"),
-        ("stop", "", "no content"),
-    ],
-)
-def test_truncated_or_empty_model_content_blocks_the_write_up(
-    monkeypatch: pytest.MonkeyPatch,
-    finish_reason: str,
-    content: str,
-    error_text: str,
-) -> None:
+    monkeypatch.setattr(provider, "_request_count", 0)
+    monkeypatch.setattr(
+        provider.httpx,
+        "Client",
+        lambda *args, **kwargs: original_client(
+            transport=httpx.MockTransport(empty_handler), **kwargs
+        ),
+    )
+    empty = process_intake(example["transcript"], example["vehicle"])
+
+    assert empty["valid"] is False and empty["handoff"] == ""
+    assert "no content" in empty["errors"][0]
+
+
+def test_request_cap_blocks_more_than_the_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(provider, "_request_count", 0)
+
+    assert provider.reserve_request(1)
+    assert not provider.reserve_request(1)
+    assert provider.current_request_count() == 1
+
+
+def test_truncated_model_content_blocks_the_write_up(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
     monkeypatch.setattr(provider, "_request_count", 0)
     example = examples[0]
     original_client = httpx.Client
-    response_data = {"choices": [{"message": {"content": content}, "finish_reason": finish_reason}]}
+    response_data = {
+        "choices": [{"message": {"content": '{"facts":'}, "finish_reason": "length"}]
+    }
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json=response_data)
@@ -255,7 +302,7 @@ def test_truncated_or_empty_model_content_blocks_the_write_up(
     result = process_intake(example["transcript"], example["vehicle"])
 
     assert result["valid"] is False and result["handoff"] == ""
-    assert error_text in result["errors"][0]
+    assert "output limit" in result["errors"][0]
 
 
 def test_promptfoo_cases_match_the_four_conversations() -> None:

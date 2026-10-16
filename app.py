@@ -15,6 +15,7 @@ import streamlit as st
 import streamlit.components.v1
 
 from intake.api import get_settings, list_examples, parse_transcript, process_intake
+from intake.evidence import value_matches_quote
 from intake.ui_helpers import highlighted_text_html
 
 WRITE_UP_VEHICLE_LABELS = {
@@ -82,7 +83,9 @@ def _current_vehicle() -> dict[str, str]:
     return dict(vehicle)
 
 
-def _mark_dirty() -> None:
+def _sync_editor() -> None:
+    """Mirror the editor widget into the plain transcript key and mark it edited."""
+    st.session_state["transcript"] = st.session_state["editor_text"]
     st.session_state["dirty"] = True
 
 
@@ -97,7 +100,8 @@ def _store_result(result: dict, kind: str, loaded_id: str | None) -> None:
 def _load_example(example_id: str) -> None:
     example = EXAMPLE_BY_ID[example_id]
     vehicle = {k: v for k, v in example["vehicle"].items() if v}
-    st.session_state["transcript_editor"] = example["transcript"]
+    st.session_state["transcript"] = example["transcript"]
+    st.session_state["editor_text"] = example["transcript"]
     st.session_state["vehicle"] = vehicle
     st.session_state["editing"] = False
     result = process_intake(
@@ -109,13 +113,22 @@ def _load_example(example_id: str) -> None:
 def _on_load_example() -> None:
     selection = st.session_state.get("example_select")
     if selection == OWN_ID:
+        st.session_state["last_pick"] = OWN_ID
         _start_own_conversation()
         return
-    _load_example(selection)
+    if selection in EXAMPLE_BY_ID:
+        st.session_state["last_pick"] = selection
+        _load_example(selection)
+        return
+    # A click on the selected pill deselects it; restore the previous pick.
+    st.session_state["example_select"] = st.session_state.get(
+        "last_pick", EXAMPLES[0]["id"]
+    )
 
 
 def _start_own_conversation() -> None:
-    st.session_state["transcript_editor"] = ""
+    st.session_state["transcript"] = ""
+    st.session_state["editor_text"] = ""
     st.session_state["vehicle"] = {}
     st.session_state["editing"] = True
     st.session_state["highlight"] = []
@@ -123,6 +136,12 @@ def _start_own_conversation() -> None:
     st.session_state["result_kind"] = "draft"
     st.session_state["loaded_id"] = None
     st.session_state["dirty"] = False
+
+
+def _enter_edit() -> None:
+    """When edit mode opens, seed the editor from the durable transcript."""
+    if st.session_state.get("editing"):
+        st.session_state["editor_text"] = st.session_state["transcript"]
 
 
 def _set_highlight(items: list[dict[str, str]]) -> None:
@@ -134,6 +153,7 @@ def _boot() -> None:
     if st.session_state.get("booted"):
         return
     st.session_state["example_select"] = EXAMPLES[0]["id"]
+    st.session_state["last_pick"] = EXAMPLES[0]["id"]
     st.session_state["editing"] = False
     st.session_state["highlight"] = []
     st.session_state["scroll_seq"] = 0
@@ -161,7 +181,7 @@ def _turns_html(turns: list[dict[str, str]], highlight: dict[str, list[str]]) ->
 
 
 def _scroll_to_line(line: int) -> None:
-    """Scroll the conversation pane to a turn and keep it there while the page settles."""
+    """Center a turn inside the conversation pane only, without moving the page."""
     if line <= 0:
         return
     seq = st.session_state.get("scroll_seq", 0)
@@ -179,8 +199,15 @@ def _scroll_to_line(line: int) -> None:
           if (container && target) {{
             const c = container.getBoundingClientRect();
             const r = target.getBoundingClientRect();
-            ok = r.top >= c.top - 2 && r.bottom <= c.bottom + 2;
-            if (!ok) target.scrollIntoView({{ block: 'center' }});
+            const desired = container.scrollTop + (r.top - c.top)
+              - (container.clientHeight - r.height) / 2;
+            const limit = Math.max(0, container.scrollHeight - container.clientHeight);
+            const clamped = Math.max(0, Math.min(desired, limit));
+            if (Math.abs(container.scrollTop - clamped) > 1) {{
+              container.scrollTop = clamped;
+            }} else {{
+              ok = true;
+            }}
           }}
           stable = ok ? stable + 1 : 0;
           if (stable >= 5 || ticks > 40) clearInterval(timer);
@@ -208,6 +235,27 @@ def _line_of(turns: list[dict[str, str]], turn_id: str) -> int:
         if turn["id"] == turn_id:
             return index
     return 0
+
+
+def _supporting(field: str, values: list[str], evidence: list[dict]) -> list[dict]:
+    """Keep only evidence quotes that contain one of the displayed values."""
+    matching = [
+        item
+        for item in evidence
+        if any(value_matches_quote(field, value, item["quote"]) for value in values)
+    ]
+    return matching or list(evidence)
+
+
+_MD_ESCAPE = "\\`*_{}[]<>#|~"
+
+
+def _md(text: str) -> str:
+    """Escape call text so Markdown renders it literally."""
+    escaped = str(text).replace("\\", "\\\\")
+    for character in _MD_ESCAPE:
+        escaped = escaped.replace(character, "\\" + character)
+    return escaped
 
 
 def _write_up_row(
@@ -248,10 +296,10 @@ def _write_up(result: dict, vehicle: dict[str, str], turns: list[dict[str, str]]
             st.markdown("**Reported details**")
             for row, fact in enumerate(result["facts"]):
                 _write_up_row(
-                    f'**{fact["label"]}:** "{fact["value"]}"',
+                    f'**{fact["label"]}:** "{_md(fact["value"])}"',
                     "fact",
                     row,
-                    fact["evidence"],
+                    _supporting(fact["field"], [fact["value"]], fact["evidence"]),
                     turns,
                 )
         if result.get("corrections"):
@@ -259,31 +307,35 @@ def _write_up(result: dict, vehicle: dict[str, str], turns: list[dict[str, str]]
             for row, correction in enumerate(result["corrections"]):
                 _write_up_row(
                     f'**{correction["field"].title()}:** '
-                    f'"{correction["previous_value"]}" → "{correction["current_value"]}"',
+                    f'"{_md(correction["previous_value"])}" → "{_md(correction["current_value"])}"',
                     "correction",
                     row,
-                    correction["evidence"],
+                    _supporting(
+                        correction["field"],
+                        [correction["previous_value"], correction["current_value"]],
+                        correction["evidence"],
+                    ),
                     turns,
                 )
         if result.get("conflicts"):
             st.markdown("**Unresolved conflicts**")
             for row, conflict in enumerate(result["conflicts"]):
-                values = " or ".join(f'"{value}"' for value in conflict["values"])
+                values = " or ".join(f'"{_md(value)}"' for value in conflict["values"])
                 _write_up_row(
                     f'**{conflict["field"].title()}:** {values}',
                     "conflict",
                     row,
-                    conflict["evidence"],
+                    _supporting(conflict["field"], list(conflict["values"]), conflict["evidence"]),
                     turns,
                 )
         if result.get("questions"):
             st.markdown("**Open questions**")
             for question in result["questions"]:
-                st.markdown(f"- {question}")
+                st.markdown(f"- {_md(question)}")
         if vehicle:
             st.markdown("**Supplied vehicle context**")
             for field, value in vehicle.items():
-                st.markdown(f"- {WRITE_UP_VEHICLE_LABELS[field]}: {value}")
+                st.markdown(f"- {WRITE_UP_VEHICLE_LABELS[field]}: {_md(value)}")
 
 
 def _worth_retrying(result: dict) -> bool:
@@ -297,12 +349,12 @@ st.set_option("client.toolbarMode", "minimal")
 st.markdown(CSS, unsafe_allow_html=True)
 
 st.title("Service intake")
-st.caption("A customer call becomes a technician write-up, with a quote for every line.")
+st.caption("A customer call becomes a technician write-up, where every detail cites the call.")
 
 _boot()
 _apply_secret_env()
 settings = get_settings()
-transcript = st.session_state["transcript_editor"]
+transcript = st.session_state["transcript"]
 vehicle = _current_vehicle()
 result = st.session_state.get("result")
 stale = bool(result) and bool(st.session_state.get("dirty"))
@@ -325,15 +377,15 @@ with left:
             '<div class="vehicle">' + html.escape(_vehicle_line(vehicle)) + "</div>",
             unsafe_allow_html=True,
         )
-    st.toggle("Edit conversation", key="editing")
+    st.toggle("Edit conversation", key="editing", on_change=_enter_edit)
     if st.session_state["editing"]:
         st.text_area(
             "Conversation text",
             value=transcript,
-            key="transcript_editor",
+            key="editor_text",
             max_chars=12000,
             height=260,
-            on_change=_mark_dirty,
+            on_change=_sync_editor,
             label_visibility="collapsed",
             placeholder=(
                 "Paste or type the conversation, one turn per line. Example:\n"

@@ -66,11 +66,41 @@ def test_conversation_edits_hide_the_old_write_up() -> None:
     assert _write_up_present(at)
 
     at.toggle(key="editing").set_value(True).run()
-    at.text_area(key="transcript_editor").set_value("Customer: I hear a changed sound.")
+    at.text_area(key="editor_text").set_value("Customer: I hear a changed sound.")
     at.run()
 
     assert not _write_up_present(at)
     assert any("The conversation changed." in item.value for item in at.warning)
+
+
+def test_leaving_edit_mode_keeps_the_edited_conversation() -> None:
+    at = _run_app()
+    at.toggle(key="editing").set_value(True).run()
+    edited = at.session_state["transcript"] + "\nCustomer: It also happens at night."
+    at.text_area(key="editor_text").set_value(edited).run()
+    at.toggle(key="editing").set_value(False).run()
+
+    assert at.session_state["transcript"] == edited
+    assert "It also happens at night." in _conversation_html(at)
+
+
+def test_deselecting_the_selected_pill_keeps_the_conversation() -> None:
+    from streamlit.proto.WidgetStates_pb2 import WidgetStates
+
+    at = _run_app()
+    transcript_before = at.session_state["transcript"]
+
+    # A click on the selected pill sends an empty selection. AppTest's
+    # unselect() does not produce that message, so send it directly.
+    states = WidgetStates()
+    widget = states.widgets.add()
+    widget.id = at.pills[0].id
+    widget.string_array_value.data.extend([])
+    at._run(states)
+
+    assert not at.exception
+    assert at.session_state["example_select"] == "noise-over-bumps"
+    assert at.session_state["transcript"] == transcript_before
 
 
 def test_failed_source_check_runs_one_retry(monkeypatch) -> None:
@@ -162,6 +192,106 @@ def test_http_500_shows_safe_error_and_removes_the_saved_write_up(monkeypatch) -
     assert any("provider returned HTTP 500" in item.value for item in at.error)
     assert all("test-only-secret" not in item.value for item in at.error)
     assert any("Analysis could not finish" in item.value for item in at.markdown)
+
+
+def test_reopening_the_editor_keeps_the_edited_conversation(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+
+    def mock_request(**_kwargs):
+        return {
+            "facts": [{
+                "id": "F1",
+                "field": "noise",
+                "value": "clunk",
+                "evidence": [{
+                    "turn_id": "T1",
+                    "speaker": "Customer",
+                    "quote": "clunk",
+                }],
+            }],
+            "corrections": [],
+            "conflicts": [],
+            "questions": [],
+        }
+
+    monkeypatch.setattr(api, "request_extraction", mock_request)
+    at = _run_app()
+    at.toggle(key="editing").set_value(True).run()
+    edited = "Customer: I hear a clunk."
+    at.text_area(key="editor_text").set_value(edited).run()
+    at.button(key="analyze").click().run()
+    at.toggle(key="editing").set_value(False).run()
+    at.button(key="hl-fact-0").click().run()
+    at.toggle(key="editing").set_value(True).run()
+
+    assert at.text_area(key="editor_text").value == edited
+    assert _write_up_present(at)
+
+
+def test_source_chip_cites_the_evidence_that_contains_the_value(monkeypatch) -> None:
+    example = {
+        "id": "boundaries",
+        "title": "Boundary",
+        "description": "Test fixture.",
+        "transcript": "Advisor: You drive an R1T.\nCustomer: It has a whine.",
+        "vehicle": {},
+        "result": {
+            "facts": [{
+                "id": "F1",
+                "field": "noise",
+                "value": "whine",
+                "evidence": [
+                    {"turn_id": "T1", "speaker": "Advisor", "quote": "R1T"},
+                    {"turn_id": "T2", "speaker": "Customer", "quote": "whine"},
+                ],
+            }],
+            "corrections": [],
+            "conflicts": [],
+            "questions": [],
+        },
+    }
+    altered = deepcopy(examples)
+    altered[0] = example
+    monkeypatch.setattr(api, "list_examples", lambda: deepcopy(altered))
+
+    at = _run_app()
+    button = at.button(key="hl-fact-0")
+    label = getattr(button, "label", None) or button.proto.label
+
+    assert "Customer" in label and "line 2" in label
+
+
+def test_two_failed_source_checks_show_the_error_without_a_draft(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+    calls = {"count": 0}
+
+    def always_bad(**_kwargs):
+        calls["count"] += 1
+        return {
+            "facts": [{
+                "id": "F1",
+                "field": "noise",
+                "value": "humming",
+                "evidence": [{
+                    "turn_id": "T2",
+                    "speaker": "Customer",
+                    "quote": "creaking sound",
+                }],
+            }],
+            "corrections": [],
+            "conflicts": [],
+            "questions": [],
+        }
+
+    monkeypatch.setattr(api, "request_extraction", always_bad)
+    at = _run_app()
+    at.toggle(key="editing").set_value(True).run()
+    at.button(key="analyze").click().run()
+
+    assert calls["count"] == 2
+    assert not _write_up_present(at)
+    assert any("Evidence" in item.value for item in at.error)
+    assert not at.get("download_button")
 
 
 def test_source_button_highlights_the_quote_in_the_conversation() -> None:
