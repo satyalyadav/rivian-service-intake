@@ -32,10 +32,13 @@ SECRET_ENV_KEYS = (
 
 EXAMPLES = list_examples()
 EXAMPLE_BY_ID = {example["id"]: example for example in EXAMPLES}
+OWN_ID = "own"
+PICKER_OPTIONS = [example["id"] for example in EXAMPLES] + [OWN_ID]
 
 CSS = """<style>
 [data-testid="stHeader"], [data-testid="stToolbar"],
-[data-testid="stDecoration"], [data-testid="stStatusWidget"] { display: none; }
+[data-testid="stDecoration"], [data-testid="stStatusWidget"],
+[data-testid="stHeaderActionElements"] { display: none; }
 div[data-baseweb="base-input"],
 div[data-baseweb="textarea"] { border-color: #c3cac0 !important; background-color: #ffffff; }
 [data-testid="stTextAreaRootElement"] { border-color: #c3cac0 !important; }
@@ -104,7 +107,22 @@ def _load_example(example_id: str) -> None:
 
 
 def _on_load_example() -> None:
-    _load_example(st.session_state["example_select"])
+    selection = st.session_state.get("example_select")
+    if selection == OWN_ID:
+        _start_own_conversation()
+        return
+    _load_example(selection)
+
+
+def _start_own_conversation() -> None:
+    st.session_state["transcript_editor"] = ""
+    st.session_state["vehicle"] = {}
+    st.session_state["editing"] = True
+    st.session_state["highlight"] = []
+    st.session_state["result"] = None
+    st.session_state["result_kind"] = "draft"
+    st.session_state["loaded_id"] = None
+    st.session_state["dirty"] = False
 
 
 def _set_highlight(items: list[dict[str, str]]) -> None:
@@ -143,26 +161,30 @@ def _turns_html(turns: list[dict[str, str]], highlight: dict[str, list[str]]) ->
 
 
 def _scroll_to_line(line: int) -> None:
-    """Scroll the conversation pane to a turn from inside a tiny component iframe."""
+    """Scroll the conversation pane to a turn and keep it there while the page settles."""
     if line <= 0:
         return
     seq = st.session_state.get("scroll_seq", 0)
     st.components.v1.html(
         f"""<script>
         const seq = {seq};
-        function jump() {{
-          const doc = window.parent.document;
+        const doc = window.parent.document;
+        let stable = 0;
+        let ticks = 0;
+        const timer = setInterval(() => {{
+          ticks += 1;
+          const container = doc.querySelector('.turns');
           const target = doc.getElementById('turn-{line}');
-          if (!target) return false;
-          target.scrollIntoView({{ block: 'center' }});
-          return true;
-        }}
-        if (!jump()) {{
-          let tries = 0;
-          const timer = setInterval(() => {{
-            if (jump() || ++tries > 20) clearInterval(timer);
-          }}, 100);
-        }}
+          let ok = false;
+          if (container && target) {{
+            const c = container.getBoundingClientRect();
+            const r = target.getBoundingClientRect();
+            ok = r.top >= c.top - 2 && r.bottom <= c.bottom + 2;
+            if (!ok) target.scrollIntoView({{ block: 'center' }});
+          }}
+          stable = ok ? stable + 1 : 0;
+          if (stable >= 5 || ticks > 40) clearInterval(timer);
+        }}, 60);
         </script>""",
         height=0,
     )
@@ -285,11 +307,12 @@ vehicle = _current_vehicle()
 result = st.session_state.get("result")
 stale = bool(result) and bool(st.session_state.get("dirty"))
 
-st.selectbox(
+st.pills(
     "Choose a conversation",
-    options=[example["id"] for example in EXAMPLES],
-    format_func=lambda example_id: EXAMPLE_BY_ID[example_id]["title"],
+    options=PICKER_OPTIONS,
+    format_func=lambda value: EXAMPLE_BY_ID[value]["title"] if value in EXAMPLE_BY_ID else "Your own",
     key="example_select",
+    default=EXAMPLES[0]["id"],
     on_change=_on_load_example,
 )
 
@@ -312,6 +335,11 @@ with left:
             height=260,
             on_change=_mark_dirty,
             label_visibility="collapsed",
+            placeholder=(
+                "Paste or type the conversation, one turn per line. Example:\n"
+                "Advisor: How can I help you today?\n"
+                "Customer: There is a rattle over bumps in the morning."
+            ),
         )
         st.caption("One turn per line, as 'Speaker: text'.")
         if settings.configured:
@@ -348,7 +376,7 @@ with right:
     if stale:
         st.warning("The conversation changed. Analyze again to update the write-up.")
     elif not result:
-        st.info("Load an example to see its saved result.")
+        st.info("Edit the conversation on the left, then click Analyze conversation.")
     if result and not stale:
         if not result.get("valid") or result.get("errors") or not result.get("handoff"):
             st.markdown("**Analysis could not finish**")

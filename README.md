@@ -2,7 +2,7 @@
 
 This prototype turns a service call into a technician write-up. Every line in the write-up points back to the words in the conversation, the advisor reviews the draft before passing it on, and anything the call left unknown becomes an open question. It does not diagnose a vehicle or make repair, coverage, or scheduling decisions.
 
-Four synthetic conversations work without a model key. Their saved results came from real runs of the same pipeline on those conversations, and they pass the same validation the live path uses. Editing a conversation enables a live model request when the server has a key.
+Four synthetic conversations work without a model key. Their saved results came from real runs of the same pipeline on those conversations, and they pass the same validation the live path uses. The picker also offers Your own for pasting a fresh conversation, and editing a conversation enables a live model request when the server has a key.
 
 ## Run the app
 
@@ -69,9 +69,8 @@ Live mode never falls back to saved results. See the [Promptfoo Python integrati
 
 State as of 2026-10-16, on the current conversations and prompt:
 
-- The Python suite passed 51 tests.
-- Saved fixtures passed 4 of 4 checks. A live run of the same four cases passed 4 of 4 and is saved in `evals/results-live.json`.
-- Browser review of the deployed layout confirmed that the Streamlit toolbar and menu are hidden, the write-up renders with line references, and clicking a source quote highlights those words in the conversation.
+- The Python suite passed 23 tests: the four saved conversations end to end, quote and correction rules, input limits, provider request shape and failure modes, and the UI flows. Saved fixtures passed 4 of 4 checks. A live run of the same four cases passed 4 of 4 and is saved in `evals/results-live.json`.
+- Browser review confirmed that the Streamlit chrome and heading icons are hidden, the write-up renders with line references, and clicking a source jumps the conversation pane to that turn and highlights the words.
 - The deployed app completed a live model run on an edited conversation and rendered the fresh write-up (checked 2026-10-16).
 
 Exact quote matching proves that a quote appears under the named speaker and turn; it does not prove semantic support for the extracted claim. The four conversations do not establish broad reliability or operational time savings.

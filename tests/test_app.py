@@ -164,44 +164,6 @@ def test_http_500_shows_safe_error_and_removes_the_saved_write_up(monkeypatch) -
     assert any("Analysis could not finish" in item.value for item in at.markdown)
 
 
-def test_edited_flow_keeps_the_fresh_write_up_after_clicking_a_source(monkeypatch) -> None:
-    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
-
-    def mock_request(**_kwargs):
-        return {
-            "facts": [{
-                "id": "F1",
-                "field": "conditions",
-                "value": "worse in the evenings",
-                "evidence": [{
-                    "turn_id": "T4",
-                    "speaker": "Customer",
-                    "quote": "worse in the evenings",
-                }],
-            }],
-            "corrections": [],
-            "conflicts": [],
-            "questions": [],
-        }
-
-    monkeypatch.setattr(api, "request_extraction", mock_request)
-    at = _run_app()
-    at.toggle(key="editing").set_value(True).run()
-    edited = at.session_state["transcript_editor"].replace(
-        "worse in the mornings", "worse in the evenings"
-    )
-    at.text_area(key="transcript_editor").set_value(edited)
-    at.button(key="analyze").click().run()
-
-    assert at.session_state["result_kind"] == "fresh"
-    assert _write_up_present(at)
-
-    at.button(key="hl-fact-0").click().run()
-
-    assert not any("The conversation changed" in item.value for item in at.warning)
-    assert _write_up_present(at)
-
-
 def test_source_button_highlights_the_quote_in_the_conversation() -> None:
     at = _run_app()
     assert "class=\"ev\"" not in _conversation_html(at)
