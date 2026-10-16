@@ -1,8 +1,8 @@
 {
-  "evalId": "eval-sc4-2026-10-16T16:45:56",
+  "evalId": "eval-qWK-2026-10-16T17:38:43",
   "results": {
     "version": 3,
-    "timestamp": "2026-10-16T16:45:56.768Z",
+    "timestamp": "2026-10-16T17:38:43.688Z",
     "prompts": [
       {
         "id": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
@@ -16,7 +16,7 @@
           "testErrorCount": 0,
           "assertPassCount": 6,
           "assertFailCount": 0,
-          "totalLatencyMs": 461,
+          "totalLatencyMs": 934,
           "tokenUsage": {
             "prompt": 0,
             "completion": 0,
@@ -79,8 +79,8 @@
             }
           ]
         },
-        "id": "151792e9-1dce-42cd-842a-c46f9878afcc",
-        "latencyMs": 407,
+        "id": "f78e2d03-f12d-4665-9be2-8caa09b7ca9d",
+        "latencyMs": 782,
         "namedScores": {},
         "prompt": {
           "raw": "clean-intake",
@@ -176,8 +176,8 @@
             }
           ]
         },
-        "id": "804d52b3-0627-48f1-8317-08c40b119c6e",
-        "latencyMs": 13,
+        "id": "a700012f-e776-4eed-a483-02f1ff57e84b",
+        "latencyMs": 23,
         "namedScores": {},
         "prompt": {
           "raw": "missing-details",
@@ -273,8 +273,8 @@
             }
           ]
         },
-        "id": "7896c71d-1675-44df-8d12-c1c68a5f360e",
-        "latencyMs": 11,
+        "id": "edb2aaf3-749b-449d-bac6-e1e64208eb3c",
+        "latencyMs": 25,
         "namedScores": {},
         "prompt": {
           "raw": "explicit-correction",
@@ -370,8 +370,8 @@
             }
           ]
         },
-        "id": "7825541b-d54d-40aa-ae48-2d59d8900cb8",
-        "latencyMs": 11,
+        "id": "23f2a17c-993e-484a-8b4d-eb14d0707cb8",
+        "latencyMs": 36,
         "namedScores": {},
         "prompt": {
           "raw": "unresolved-mileage",
@@ -467,8 +467,8 @@
             }
           ]
         },
-        "id": "efedaace-4ea5-4c40-9cd1-f60788e0c058",
-        "latencyMs": 9,
+        "id": "8368eae0-768d-4659-96a5-288194cfc181",
+        "latencyMs": 35,
         "namedScores": {},
         "prompt": {
           "raw": "vehicle-context",
@@ -564,8 +564,8 @@
             }
           ]
         },
-        "id": "5c66394a-19dc-412e-becb-7d7e500c6b41",
-        "latencyMs": 10,
+        "id": "e5dd37de-3a8a-4582-9e62-a2b808a7c61b",
+        "latencyMs": 33,
         "namedScores": {},
         "prompt": {
           "raw": "instruction-injection",
@@ -668,8 +668,8 @@
           }
         }
       },
-      "durationMs": 2201,
-      "evaluationDurationMs": 2201
+      "durationMs": 5251,
+      "evaluationDurationMs": 5251
     }
   },
   "config": {
@@ -741,8 +741,8 @@
     "nodeVersion": "v24.18.0",
     "platform": "linux",
     "arch": "x64",
-    "exportedAt": "2026-10-16T16:45:59.046Z",
-    "evaluationCreatedAt": "2026-10-16T16:45:56.768Z"
+    "exportedAt": "2026-10-16T17:38:49.084Z",
+    "evaluationCreatedAt": "2026-10-16T17:38:43.688Z"
   },
   "vars": [
     "case_id"

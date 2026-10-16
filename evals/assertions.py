@@ -14,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from evals.cases import get_case
+from intake.schema import SINGLE_VALUE_FIELDS
 
 
 def _mileage_number(value: str) -> int | None:
@@ -38,7 +39,7 @@ def _same_value(field: str, actual: str, expected: str) -> bool:
 def _required_fact_matches(field: str, actual: str, expected: str) -> bool:
     if not isinstance(actual, str):
         return False
-    if field == "mileage":
+    if field in SINGLE_VALUE_FIELDS:
         return _same_value(field, actual, expected)
     return expected.casefold() in actual.casefold()
 
