@@ -244,6 +244,7 @@ with left:
     if st.session_state["editing"]:
         st.text_area(
             "Conversation text",
+            value=transcript,
             key="transcript_editor",
             max_chars=12000,
             height=260,
@@ -254,6 +255,7 @@ with left:
         with st.expander("Vehicle context (optional)"):
             st.checkbox(
                 "Include vehicle context",
+                value=bool(st.session_state.get("vehicle_enabled")),
                 key="vehicle_enabled",
                 on_change=_mark_dirty,
             )
@@ -261,6 +263,7 @@ with left:
                 for field in VEHICLE_FIELDS:
                     st.text_input(
                         VEHICLE_LABELS[field],
+                        value=st.session_state.get(f"veh_{field}", ""),
                         key=f"veh_{field}",
                         max_chars=VEHICLE_FIELD_LIMITS[field],
                         on_change=_mark_dirty,
