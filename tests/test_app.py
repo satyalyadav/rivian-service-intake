@@ -19,7 +19,8 @@ def _run_app() -> AppTest:
 
 
 def _write_up_present(at: AppTest) -> bool:
-    return any("SERVICE INTAKE DRAFT" in str(item.value) for item in at.get("html"))
+    texts = [item.value for item in at.caption] + [item.value for item in at.markdown]
+    return any("SERVICE INTAKE DRAFT" in (text or "") for text in texts)
 
 
 def _conversation_html(at: AppTest) -> str:
@@ -120,7 +121,7 @@ def test_source_button_highlights_the_quote_in_the_conversation() -> None:
     at = _run_app()
     assert "class=\"ev\"" not in _conversation_html(at)
 
-    at.button(key="hl-fact-0-0").click().run()
+    at.button(key="hl-fact-0").click().run()
 
     quote = "creaking sound when I go over speed bumps"
     assert at.session_state["highlight"] == [{"turn_id": "T2", "quote": quote}]

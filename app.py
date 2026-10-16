@@ -20,6 +20,12 @@ from intake.validation import VEHICLE_FIELD_LIMITS
 
 VEHICLE_FIELDS = ("vin", "model", "year", "mileage")
 VEHICLE_LABELS = {"vin": "VIN", "model": "Model", "year": "Year", "mileage": "Mileage"}
+WRITE_UP_VEHICLE_LABELS = {
+    "vin": "VIN",
+    "model": "Vehicle model",
+    "year": "Vehicle year",
+    "mileage": "Vehicle mileage",
+}
 SECRET_ENV_KEYS = (
     "INTAKE_API_KEY",
     "INTAKE_BASE_URL",
@@ -33,30 +39,25 @@ EXAMPLE_BY_ID = {example["id"]: example for example in EXAMPLES}
 CSS = """<style>
 [data-testid="stHeader"], [data-testid="stToolbar"],
 [data-testid="stDecoration"], [data-testid="stStatusWidget"] { display: none; }
-.turns { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.turns { display: flex; flex-direction: column; gap: 4px; margin-top: 6px;
+  max-height: 34rem; overflow-y: auto; padding-right: 2px; }
 .turn { background: #ffffff; border: 1px solid #e4e6e1; border-radius: 8px;
-  padding: 8px 10px; }
-.line-num { font-size: 12px; font-weight: 600; color: #68736b; margin-right: 6px; }
-.speaker { font-size: 12px; font-weight: 600; color: #243c30; }
-.turn-text { margin: 4px 0 0; font-size: 14px; color: #243c30;
-  white-space: pre-wrap; overflow-wrap: anywhere; }
+  padding: 5px 9px; }
+.line-num { font-size: 11px; font-weight: 600; color: #68736b; margin-right: 6px; }
+.speaker { font-size: 11px; font-weight: 600; color: #243c30; margin-right: 6px; }
+.turn-text { font-size: 13.5px; color: #243c30; white-space: pre-wrap;
+  overflow-wrap: anywhere; }
 mark.ev { background: #dce9de; color: #243c30; padding: 0 2px; border-radius: 3px; }
 .vehicle { font-size: 12px; color: #68736b; margin: 2px 0 4px; }
-.note { background: #ffffff; border: 1px solid #e4e6e1; border-radius: 8px;
-  padding: 14px 16px; }
-.note-title { font-size: 11px; letter-spacing: 0.08em; font-weight: 700;
-  color: #68736b; text-transform: uppercase; margin-bottom: 4px; }
-.note-section { font-size: 14px; font-weight: 600; color: #243c30;
-  margin: 10px 0 2px; }
-.note-item { font-size: 14px; color: #243c30; margin: 2px 0 2px 2px; }
-.note-item .bullet { color: #68736b; margin-right: 6px; }
+[class*="st-key-hl-"] button { padding: 0.1rem 0.5rem; min-height: 26px;
+  font-size: 12px; line-height: 1; }
 [data-testid="stAppViewContainer"] [data-testid="stMainBlockContainer"] {
   padding-top: 2rem; padding-bottom: 1.5rem;
 }
 [data-testid="stAppViewContainer"] h1 { font-size: 2rem; line-height: 1.15; margin-bottom: 0.35rem; }
 [data-testid="stAppViewContainer"] h2,
 [data-testid="stAppViewContainer"] h3 { font-size: 1.25rem; margin-top: 0.5rem; }
-[data-testid="stAppViewContainer"] [data-testid="stVerticalBlock"] { gap: 0.6rem; }
+[data-testid="stAppViewContainer"] [data-testid="stVerticalBlock"] { gap: 0.5rem; }
 </style>"""
 
 
@@ -116,8 +117,8 @@ def _on_load_example() -> None:
     _store_result(result, "saved", example["id"])
 
 
-def _set_highlight(turn_id: str, quote: str) -> None:
-    st.session_state["highlight"] = [{"turn_id": turn_id, "quote": quote}]
+def _set_highlight(items: list[dict[str, str]]) -> None:
+    st.session_state["highlight"] = [dict(item) for item in items]
 
 
 def _boot() -> None:
@@ -141,29 +142,10 @@ def _turns_html(turns: list[dict[str, str]], highlight: dict[str, list[str]]) ->
             + '<span class="speaker">'
             + html.escape(turn["speaker"])
             + "</span>"
-            + '<p class="turn-text">' + text + "</p></div>"
+            + '<span class="turn-text">'
+            + text
+            + "</span></div>"
         )
-    parts.append("</div>")
-    return "".join(parts)
-
-
-def _note_html(note: str) -> str:
-    parts = ['<div class="note">']
-    for line in note.splitlines():
-        if not line.strip():
-            continue
-        if line == "SERVICE INTAKE DRAFT":
-            parts.append('<div class="note-title">' + html.escape(line) + "</div>")
-        elif line.endswith(":") and not line.startswith("- "):
-            parts.append('<div class="note-section">' + html.escape(line) + "</div>")
-        elif line.startswith("- "):
-            parts.append(
-                '<div class="note-item"><span class="bullet">&bull;</span>'
-                + html.escape(line[2:])
-                + "</div>"
-            )
-        else:
-            parts.append('<div class="note-item">' + html.escape(line) + "</div>")
     parts.append("</div>")
     return "".join(parts)
 
@@ -188,21 +170,84 @@ def _line_of(turns: list[dict[str, str]], turn_id: str) -> int:
     return 0
 
 
-def _source_buttons(
-    kind: str, row: int, evidence: list[dict], turns: list[dict[str, str]]
+def _write_up_row(
+    text: str,
+    kind: str,
+    row: int,
+    evidence: list[dict],
+    turns: list[dict[str, str]],
 ) -> None:
     if not evidence:
+        st.markdown(text)
         return
-    columns = st.columns(min(len(evidence), 4))
-    for index, item in enumerate(evidence):
-        with columns[index % len(columns)]:
-            st.button(
-                f"{item['speaker']}, line {_line_of(turns, item['turn_id'])}",
-                key=f"hl-{kind}-{row}-{index}",
-                help=item["quote"],
-                on_click=_set_highlight,
-                args=(item["turn_id"], item["quote"]),
-            )
+    text_col, chip_col = st.columns([5, 2], vertical_alignment="center")
+    with text_col:
+        st.markdown(text)
+    with chip_col:
+        first = evidence[0]
+        label = f"{first['speaker']}, line {_line_of(turns, first['turn_id'])}"
+        if len(evidence) > 1:
+            label += f" +{len(evidence) - 1}"
+        st.button(
+            label,
+            key=f"hl-{kind}-{row}",
+            help="\n".join(
+                f"{item['speaker']}, line {_line_of(turns, item['turn_id'])}: {item['quote']}"
+                for item in evidence
+            ),
+            on_click=_set_highlight,
+            args=(
+                [
+                    {"turn_id": item["turn_id"], "quote": item["quote"]}
+                    for item in evidence
+                ],
+            ),
+        )
+
+
+def _write_up(result: dict, vehicle: dict[str, str], turns: list[dict[str, str]]) -> None:
+    with st.container(border=True):
+        st.caption("SERVICE INTAKE DRAFT")
+        if result.get("facts"):
+            st.markdown("**Reported details**")
+            for row, fact in enumerate(result["facts"]):
+                _write_up_row(
+                    f'**{fact["label"]}:** "{fact["value"]}"',
+                    "fact",
+                    row,
+                    fact["evidence"],
+                    turns,
+                )
+        if result.get("corrections"):
+            st.markdown("**Correction history**")
+            for row, correction in enumerate(result["corrections"]):
+                _write_up_row(
+                    f'**{correction["field"].title()}:** '
+                    f'"{correction["previous_value"]}" → "{correction["current_value"]}"',
+                    "correction",
+                    row,
+                    correction["evidence"],
+                    turns,
+                )
+        if result.get("conflicts"):
+            st.markdown("**Unresolved conflicts**")
+            for row, conflict in enumerate(result["conflicts"]):
+                values = " or ".join(f'"{value}"' for value in conflict["values"])
+                _write_up_row(
+                    f'**{conflict["field"].title()}:** {values}',
+                    "conflict",
+                    row,
+                    conflict["evidence"],
+                    turns,
+                )
+        if result.get("questions"):
+            st.markdown("**Open questions**")
+            for question in result["questions"]:
+                st.markdown(f"- {question}")
+        if vehicle:
+            st.markdown("**Supplied vehicle context**")
+            for field, value in vehicle.items():
+                st.markdown(f"- {WRITE_UP_VEHICLE_LABELS[field]}: {value}")
 
 
 st.set_page_config(page_title="Service intake", layout="wide")
@@ -235,7 +280,7 @@ left, right = st.columns(2)
 
 with left:
     st.subheader("Conversation")
-    if vehicle:
+    if vehicle and not st.session_state["editing"]:
         st.markdown(
             '<div class="vehicle">' + html.escape(_vehicle_line(vehicle)) + "</div>",
             unsafe_allow_html=True,
@@ -308,37 +353,11 @@ with right:
                 turns = parse_transcript(transcript)
             except ValueError:
                 turns = []
-            st.html(_note_html(result["handoff"]))
+            _write_up(result, vehicle, turns)
             st.download_button(
                 "Download draft",
                 data=result["handoff"],
                 file_name="service-intake-draft.txt",
                 key="download_writeup",
             )
-            st.caption("Click a source to highlight it in the conversation.")
-            if result.get("facts"):
-                st.markdown("**What we know**")
-                for row, fact in enumerate(result["facts"]):
-                    with st.container(border=True):
-                        st.markdown(f"**{fact['label']}:** {fact['value']}")
-                        _source_buttons("fact", row, fact["evidence"], turns)
-            if result.get("corrections"):
-                st.markdown("**What changed**")
-                for row, correction in enumerate(result["corrections"]):
-                    with st.container(border=True):
-                        st.markdown(
-                            f"**{correction['field'].title()}:** "
-                            f"{correction['previous_value']} → {correction['current_value']}"
-                        )
-                        _source_buttons("correction", row, correction["evidence"], turns)
-            if result.get("conflicts"):
-                st.markdown("**Still unclear**")
-                for row, conflict in enumerate(result["conflicts"]):
-                    with st.container(border=True):
-                        values = " or ".join(conflict["values"])
-                        st.markdown(f"**{conflict['field'].title()}:** {values}")
-                        _source_buttons("conflict", row, conflict["evidence"], turns)
-            if result.get("questions"):
-                st.markdown("**Ask the customer**")
-                for question in result["questions"]:
-                    st.markdown(f"- {question}")
+            st.caption("Click a source to see its words in the conversation.")
