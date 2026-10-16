@@ -352,6 +352,8 @@ st.title("Service intake")
 st.caption("A customer call becomes a technician write-up, where every detail cites the call.")
 
 _boot()
+if st.session_state.pop("close_editor", False):
+    st.session_state["editing"] = False
 _apply_secret_env()
 settings = get_settings()
 transcript = st.session_state["transcript"]
@@ -406,6 +408,10 @@ with left:
                 if _worth_retrying(fresh):
                     fresh = process_intake(transcript, vehicle)
             _store_result(fresh, "fresh", None)
+            if fresh.get("valid"):
+                # Show the analyzed call as conversation turns, not as the editor.
+                st.session_state["close_editor"] = True
+                st.rerun()
             result = fresh
             stale = False
     else:

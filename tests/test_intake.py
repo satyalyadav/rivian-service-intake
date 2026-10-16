@@ -185,6 +185,100 @@ def test_correction_and_conflict_rules() -> None:
     assert partial_mileage["valid"] is False
 
 
+def test_repeating_fields_can_carry_facts_alongside_a_conflict() -> None:
+    transcript = (
+        "Customer: The handles don't come out sometimes.\n"
+        "Customer: The car doesn't respond either.\n"
+        "Advisor: Are those the same problem?\n"
+        "Customer: I'm not sure. Also the charger stops on its own."
+    )
+    saved = {
+        "facts": [
+            {"id": "F1", "field": "concern", "value": "the charger stops", "evidence": [
+                {"turn_id": "T4", "speaker": "Customer", "quote": "the charger stops on its own"}
+            ]},
+            {"id": "F2", "field": "concern", "value": "The handles don't come out", "evidence": [
+                {"turn_id": "T1", "speaker": "Customer", "quote": "The handles don't come out"}
+            ]},
+            {"id": "F3", "field": "other_detail", "value": "I'm not sure", "evidence": [
+                {"turn_id": "T4", "speaker": "Customer", "quote": "I'm not sure"}
+            ]},
+        ],
+        "corrections": [],
+        "conflicts": [{
+            "field": "concern",
+            "values": ["The handles don't come out", "The car doesn't respond"],
+            "evidence": [
+                {"turn_id": "T1", "speaker": "Customer", "quote": "The handles don't come out"},
+                {"turn_id": "T2", "speaker": "Customer", "quote": "The car doesn't respond"},
+            ],
+        }],
+        "questions": [],
+    }
+
+    result = process_intake(transcript, {}, saved_result=saved)
+
+    assert result["valid"] is True
+    assert [fact["value"] for fact in result["facts"]] == ["the charger stops", "I'm not sure"]
+    assert [fact["id"] for fact in result["facts"]] == ["F1", "F2"]
+    assert result["conflicts"][0]["field"] == "concern"
+
+    # The filtered result must pass the same validator if it is checked again.
+    again = process_intake(
+        transcript,
+        {},
+        saved_result={
+            "facts": [
+                {"id": fact["id"], "field": fact["field"], "value": fact["value"], "evidence": fact["evidence"]}
+                for fact in result["facts"]
+            ],
+            "corrections": [],
+            "conflicts": result["conflicts"],
+            "questions": [],
+        },
+    )
+    assert again["valid"] is True, again["errors"]
+
+
+def test_dropping_every_fact_of_a_conflicted_field_stays_valid() -> None:
+    transcript = (
+        "Customer: The handles don't come out sometimes.\n"
+        "Customer: The car doesn't respond either."
+    )
+    saved = {
+        "facts": [{"id": "F1", "field": "concern", "value": "The handles don't come out", "evidence": [
+            {"turn_id": "T1", "speaker": "Customer", "quote": "The handles don't come out"}
+        ]}],
+        "corrections": [],
+        "conflicts": [{
+            "field": "concern",
+            "values": ["The handles don't come out", "The car doesn't respond"],
+            "evidence": [
+                {"turn_id": "T1", "speaker": "Customer", "quote": "The handles don't come out"},
+                {"turn_id": "T2", "speaker": "Customer", "quote": "The car doesn't respond"},
+            ],
+        }],
+        "questions": [],
+    }
+
+    result = process_intake(transcript, {}, saved_result=saved)
+
+    assert result["valid"] is True
+    assert result["facts"] == []
+
+    again = process_intake(
+        transcript,
+        {},
+        saved_result={
+            "facts": result["facts"],
+            "corrections": [],
+            "conflicts": result["conflicts"],
+            "questions": [],
+        },
+    )
+    assert again["valid"] is True, again["errors"]
+
+
 def test_strict_inputs_reject_bad_vehicle_values_and_extra_fields() -> None:
     unknown = process_intake("Customer: The warning appeared today.", {"make": "Rivian"})
     non_text = process_intake("Customer: The warning appeared today.", {"year": 2024})
@@ -250,7 +344,7 @@ def test_provider_request_contract(monkeypatch: pytest.MonkeyPatch) -> None:
     request = captured["request"]
     assert result["source"] == "live" and result["valid"]
     assert body["response_format"] == {"type": "json_object"}
-    assert body["max_tokens"] >= 10_000
+    assert body["max_tokens"] == 24_000
     assert "Complete JSON Schema" in body["messages"][0]["content"]
     assert request.headers["user-agent"] == "rivian-service-intake-demo/0.1"
     assert request.headers["authorization"] == "Bearer test-only-secret"
@@ -280,6 +374,40 @@ def test_request_cap_blocks_more_than_the_limit(monkeypatch: pytest.MonkeyPatch)
     assert provider.reserve_request(1)
     assert not provider.reserve_request(1)
     assert provider.current_request_count() == 1
+
+
+def test_response_size_cap_boundary(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+    example = examples[0]
+    response_body = json.dumps({
+        "choices": [{
+            "message": {"content": json.dumps(example["result"])},
+            "finish_reason": "stop",
+        }]
+    }).encode("utf-8")
+    original_client = httpx.Client
+
+    def run_with_cap(size_cap: int) -> dict:
+        monkeypatch.setattr(provider, "_request_count", 0)
+        monkeypatch.setattr(provider, "MAX_PROVIDER_RESPONSE_BYTES", size_cap)
+        monkeypatch.setattr(
+            provider.httpx,
+            "Client",
+            lambda *args, **kwargs: original_client(
+                transport=httpx.MockTransport(
+                    lambda request: httpx.Response(200, content=response_body)
+                ),
+                **kwargs,
+            ),
+        )
+        return process_intake(example["transcript"], example["vehicle"])
+
+    accepted = run_with_cap(len(response_body))
+    assert accepted["valid"] is True, accepted["errors"]
+
+    rejected = run_with_cap(len(response_body) - 1)
+    assert rejected["valid"] is False
+    assert "size limit" in rejected["errors"][0]
 
 
 def test_truncated_model_content_blocks_the_write_up(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -16,8 +16,8 @@ from .settings import Settings
 
 
 MAX_REQUEST_BODY_BYTES = 96_000
-MAX_PROVIDER_RESPONSE_BYTES = 64_000
-MAX_OUTPUT_TOKENS = 10_000
+MAX_PROVIDER_RESPONSE_BYTES = 128_000
+MAX_OUTPUT_TOKENS = 24_000
 REQUEST_TIMEOUT = httpx.Timeout(connect=8.0, read=90.0, write=10.0, pool=8.0)
 _request_count = 0
 _request_count_lock = threading.Lock()
@@ -39,14 +39,16 @@ infer causes, diagnoses, repairs, warranty coverage, promises, or appointments. 
 create a handoff. Preserve explicit corrections as previous and current values with
 separate source quotes; the quotes may be two distinct spans from the same turn.
 Preserve unexplained disagreement as a conflict, with each value tied to a separate
-source quote. Do not put a conflicted field in facts. For a corrected field, put only
-its final value in facts. Ask at most three neutral questions about information that is
-missing. Prioritize clarifying unresolved conflicts, then symptom-specific measurements
-and context, then onset, frequency, and operating conditions. For example, if a
-tire-pressure warning is reported without pressure readings, ask for the reading for
-each tire before asking for identifiers or general service history. Do not ask for a
-vehicle detail already present in the vehicle record. Return exactly one JSON object
-that follows the complete schema below. Do not use Markdown fences, comments, or prose.
+source quote. Never report a fact that repeats one of a conflicted field's values. For
+single-value fields like mileage, model, year, and vin, report no facts at all for a
+conflicted field. For a corrected field, put only its final value in facts. Ask at most
+three neutral questions about information that is missing. Prioritize clarifying
+unresolved conflicts, then symptom-specific measurements and context, then onset,
+frequency, and operating conditions. For example, if a tire-pressure warning is reported
+without pressure readings, ask for the reading for each tire before asking for
+identifiers or general service history. Do not ask for a vehicle detail already present
+in the vehicle record. Return exactly one JSON object that follows the complete schema
+below. Do not use Markdown fences, comments, or prose.
 A fact has id (F1, F2, ...), field, value, evidence. A correction has field,
 previous_value, current_value, evidence. A conflict has field, values, evidence. Use
 empty arrays for empty sections."""

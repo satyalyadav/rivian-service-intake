@@ -1,8 +1,8 @@
 {
-  "evalId": "eval-uhs-2026-10-16T22:50:12",
+  "evalId": "eval-Fl8-2026-10-16T23:09:14",
   "results": {
     "version": 3,
-    "timestamp": "2026-10-16T22:50:12.374Z",
+    "timestamp": "2026-10-16T23:09:14.748Z",
     "prompts": [
       {
         "id": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
@@ -16,7 +16,7 @@
           "testErrorCount": 0,
           "assertPassCount": 4,
           "assertFailCount": 0,
-          "totalLatencyMs": 646,
+          "totalLatencyMs": 250,
           "tokenUsage": {
             "prompt": 0,
             "completion": 0,
@@ -79,8 +79,8 @@
             }
           ]
         },
-        "id": "b90ffefe-2e1f-40cc-bacf-c28da41107f6",
-        "latencyMs": 608,
+        "id": "4a0e9c0a-5ee8-4fb5-bb78-58a2b5a0fe37",
+        "latencyMs": 215,
         "namedScores": {},
         "prompt": {
           "raw": "noise-over-bumps",
@@ -176,8 +176,8 @@
             }
           ]
         },
-        "id": "ffef7d16-e7fd-46f2-a675-0636023f589c",
-        "latencyMs": 12,
+        "id": "46e04153-e24e-4a49-8ecd-f304cd0781ee",
+        "latencyMs": 11,
         "namedScores": {},
         "prompt": {
           "raw": "correction-and-conflict",
@@ -273,8 +273,8 @@
             }
           ]
         },
-        "id": "f067b713-5b44-45f8-90fa-8e27b206e77b",
-        "latencyMs": 13,
+        "id": "a9e05a87-535d-4a8c-bbc0-eae4d8ffd2c2",
+        "latencyMs": 12,
         "namedScores": {},
         "prompt": {
           "raw": "messy-call",
@@ -370,8 +370,8 @@
             }
           ]
         },
-        "id": "564edc59-933e-44f7-b83a-961fe581cefc",
-        "latencyMs": 13,
+        "id": "466cca22-fea3-4c42-ad42-f7cf96029320",
+        "latencyMs": 12,
         "namedScores": {},
         "prompt": {
           "raw": "missing-details",
@@ -474,8 +474,8 @@
           }
         }
       },
-      "durationMs": 2879,
-      "evaluationDurationMs": 2879
+      "durationMs": 1250,
+      "evaluationDurationMs": 1250
     }
   },
   "config": {
@@ -535,8 +535,8 @@
     "nodeVersion": "v24.18.0",
     "platform": "linux",
     "arch": "x64",
-    "exportedAt": "2026-10-16T22:50:15.439Z",
-    "evaluationCreatedAt": "2026-10-16T22:50:12.374Z"
+    "exportedAt": "2026-10-16T23:09:16.118Z",
+    "evaluationCreatedAt": "2026-10-16T23:09:14.748Z"
   },
   "vars": [
     "case_id"

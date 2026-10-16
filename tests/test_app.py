@@ -292,6 +292,37 @@ def test_two_failed_source_checks_show_the_error_without_a_draft(monkeypatch) ->
     assert not _write_up_present(at)
     assert any("Evidence" in item.value for item in at.error)
     assert not at.get("download_button")
+    assert at.session_state["editing"] is True
+
+
+def test_successful_analysis_renders_the_conversation_turns(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+
+    def mock_request(**_kwargs):
+        return {
+            "facts": [{
+                "id": "F1",
+                "field": "noise",
+                "value": "creaking sound",
+                "evidence": [{
+                    "turn_id": "T2",
+                    "speaker": "Customer",
+                    "quote": "creaking sound",
+                }],
+            }],
+            "corrections": [],
+            "conflicts": [],
+            "questions": [],
+        }
+
+    monkeypatch.setattr(api, "request_extraction", mock_request)
+    at = _run_app()
+    at.toggle(key="editing").set_value(True).run()
+    at.button(key="analyze").click().run()
+
+    assert at.session_state["editing"] is False
+    assert "class=\"turn\"" in _conversation_html(at)
+    assert _write_up_present(at)
 
 
 def test_source_button_highlights_the_quote_in_the_conversation() -> None:

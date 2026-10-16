@@ -188,10 +188,32 @@ def validate_extraction(
         raise OutputValidationError(
             "A field cannot be both corrected and unresolved. No write-up was generated."
         )
-    if set(fact_fields) & set(conflict_fields):
-        raise OutputValidationError(
-            "An unresolved field cannot also have a resolved fact. No write-up was generated."
-        )
+
+    # A settled value cannot sit on a single-value field that is also unresolved.
+    # On repeating fields, keep the facts that state something other than the
+    # conflicting values, in the order the model returned them, and renumber so
+    # the kept list still passes this validator if it is checked again.
+    conflicting_values: dict[str, set[str]] = {}
+    for field, conflict in conflict_fields.items():
+        if field not in SINGLE_VALUE_FIELDS:
+            conflicting_values[field] = set(conflict.values)
+        elif fact_fields.get(field):
+            raise OutputValidationError(
+                "An unresolved field cannot also have a resolved fact. No write-up was generated."
+            )
+
+    kept_facts = [
+        fact
+        for fact in extraction.facts
+        if fact.value not in conflicting_values.get(fact.field, set())
+    ]
+    kept_facts = [
+        fact.model_copy(update={"id": f"F{index}"})
+        for index, fact in enumerate(kept_facts, start=1)
+    ]
+    kept_by_field: dict[str, list[FactCandidate]] = defaultdict(list)
+    for fact in kept_facts:
+        kept_by_field[fact.field].append(fact)
 
     for field, corrections in correction_fields.items():
         for previous, current in zip(corrections, corrections[1:]):
@@ -199,13 +221,13 @@ def validate_extraction(
                 raise OutputValidationError(
                     "Correction history is out of order. No write-up was generated."
                 )
-        facts = fact_fields.get(field, [])
+        facts = kept_by_field.get(field, [])
         if not facts or any(fact.value != corrections[-1].current_value for fact in facts):
             raise OutputValidationError(
                 "The current fact does not match the last correction. No write-up was generated."
             )
 
-    for field, facts in fact_fields.items():
+    for field, facts in kept_by_field.items():
         values = {fact.value for fact in facts}
         if len(values) > 1 and field in SINGLE_VALUE_FIELDS and field not in correction_fields:
             raise OutputValidationError(
@@ -213,7 +235,9 @@ def validate_extraction(
             )
 
     filtered_questions = _remove_questions_answered_by_vehicle(extraction.questions, vehicle)
-    return extraction.model_copy(update={"questions": filtered_questions})
+    return extraction.model_copy(
+        update={"facts": kept_facts, "questions": filtered_questions}
+    )
 
 
 def _remove_questions_answered_by_vehicle(
