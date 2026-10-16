@@ -185,6 +185,109 @@ def test_correction_and_conflict_rules() -> None:
     assert partial_mileage["valid"] is False
 
 
+def test_repeating_field_correction_keeps_independent_facts_and_revalidates() -> None:
+    transcript = (
+        "Customer: The battery icon appeared yesterday, and it was yellow.\n"
+        "Customer: Correction, the battery icon was white, not yellow."
+    )
+    saved = {
+        "facts": [
+            {"id": "F1", "field": "warning", "value": "battery icon appeared yesterday", "evidence": [
+                {"turn_id": "T1", "speaker": "Customer", "quote": "battery icon appeared yesterday"}
+            ]},
+            {"id": "F2", "field": "warning", "value": "white", "evidence": [
+                {"turn_id": "T2", "speaker": "Customer", "quote": "battery icon was white"}
+            ]},
+        ],
+        "corrections": [{
+            "field": "warning",
+            "previous_value": "yellow",
+            "current_value": "white",
+            "evidence": [
+                {"turn_id": "T1", "speaker": "Customer", "quote": "yellow"},
+                {"turn_id": "T2", "speaker": "Customer", "quote": "white"},
+            ],
+        }],
+        "conflicts": [],
+        "questions": [],
+    }
+
+    accepted = process_intake(transcript, {}, saved_result=saved)
+
+    assert accepted["valid"] is True, accepted["errors"]
+    assert [fact["value"] for fact in accepted["facts"]] == [
+        "battery icon appeared yesterday",
+        "white",
+    ]
+    revalidated = process_intake(
+        transcript,
+        {},
+        saved_result={
+            "facts": [
+                {key: fact[key] for key in ("id", "field", "value", "evidence")}
+                for fact in accepted["facts"]
+            ],
+            "corrections": accepted["corrections"],
+            "conflicts": accepted["conflicts"],
+            "questions": accepted["questions"],
+        },
+    )
+    assert revalidated["valid"] is True, revalidated["errors"]
+    assert revalidated["facts"] == accepted["facts"]
+
+    superseded_fact = deepcopy(saved)
+    superseded_fact["facts"].append({
+        "id": "F3",
+        "field": "warning",
+        "value": "yellow",
+        "evidence": [{"turn_id": "T1", "speaker": "Customer", "quote": "yellow"}],
+    })
+    rejected_previous = process_intake(transcript, {}, saved_result=superseded_fact)
+    assert rejected_previous["valid"] is False
+    assert "superseded" in rejected_previous["errors"][0]
+
+    missing_final_fact = deepcopy(saved)
+    missing_final_fact["facts"] = missing_final_fact["facts"][:1]
+    rejected_missing = process_intake(transcript, {}, saved_result=missing_final_fact)
+    assert rejected_missing["valid"] is False
+    assert "matching its final value" in rejected_missing["errors"][0]
+
+
+def test_corrected_single_value_field_rejects_other_facts() -> None:
+    transcript = (
+        "Customer: I first saw 30,000 miles and corrected it to 28,000 miles. "
+        "The service screen also lists 27,000 miles."
+    )
+    result = process_intake(
+        transcript,
+        {},
+        saved_result={
+            "facts": [
+                {"id": "F1", "field": "mileage", "value": "28,000 miles", "evidence": [
+                    {"turn_id": "T1", "speaker": "Customer", "quote": "28,000 miles"}
+                ]},
+                {"id": "F2", "field": "mileage", "value": "27,000 miles", "evidence": [
+                    {"turn_id": "T1", "speaker": "Customer", "quote": "27,000 miles"}
+                ]},
+            ],
+            "corrections": [{
+                "field": "mileage",
+                "previous_value": "30,000 miles",
+                "current_value": "28,000 miles",
+                "evidence": [
+                    {"turn_id": "T1", "speaker": "Customer", "quote": "30,000 miles"},
+                    {"turn_id": "T1", "speaker": "Customer", "quote": "28,000 miles"},
+                ],
+            }],
+            "conflicts": [],
+            "questions": [],
+        },
+    )
+
+    assert result["valid"] is False
+    assert "single-value field" in result["errors"][0]
+
+
 def test_repeating_fields_can_carry_facts_alongside_a_conflict() -> None:
     transcript = (
         "Customer: The handles don't come out sometimes.\n"
@@ -317,6 +420,7 @@ def test_configuration_safety(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_provider_request_contract(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+    monkeypatch.setenv("INTAKE_MODEL", "deepseek-v4.1-flash")
     monkeypatch.setattr(provider, "_request_count", 0)
     example = examples[0]
     captured: dict[str, object] = {}
@@ -344,10 +448,17 @@ def test_provider_request_contract(monkeypatch: pytest.MonkeyPatch) -> None:
     request = captured["request"]
     assert result["source"] == "live" and result["valid"]
     assert body["response_format"] == {"type": "json_object"}
-    assert body["max_tokens"] == 24_000
+    assert body["max_tokens"] == provider.MAX_OUTPUT_TOKENS == 24_000
+    assert body["reasoning_effort"] == "low"
+    assert "thinking" not in body
     assert "Complete JSON Schema" in body["messages"][0]["content"]
     assert request.headers["user-agent"] == "rivian-service-intake-demo/0.1"
     assert request.headers["authorization"] == "Bearer test-only-secret"
+
+    monkeypatch.setenv("INTAKE_MODEL", "other-provider/model")
+    other_provider = process_intake(example["transcript"], example["vehicle"])
+    assert other_provider["valid"] is True
+    assert "reasoning_effort" not in captured["body"]
 
     def empty_handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={

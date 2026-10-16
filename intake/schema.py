@@ -222,9 +222,25 @@ def validate_extraction(
                     "Correction history is out of order. No write-up was generated."
                 )
         facts = kept_by_field.get(field, [])
-        if not facts or any(fact.value != corrections[-1].current_value for fact in facts):
+        current_value = corrections[-1].current_value
+        current_facts = [fact for fact in facts if fact.value == current_value]
+        if len(current_facts) != 1:
             raise OutputValidationError(
-                "The current fact does not match the last correction. No write-up was generated."
+                "A correction needs exactly one fact matching its final value. No write-up was generated."
+            )
+        superseded_values = {correction.previous_value for correction in corrections}
+        if any(
+            fact.value in superseded_values and fact.value != current_value
+            for fact in facts
+        ):
+            raise OutputValidationError(
+                "A superseded correction value cannot remain as a fact. No write-up was generated."
+            )
+        if field in SINGLE_VALUE_FIELDS and any(
+            fact.value != current_value for fact in facts
+        ):
+            raise OutputValidationError(
+                "A single-value field cannot include another fact after correction. No write-up was generated."
             )
 
     for field, facts in kept_by_field.items():

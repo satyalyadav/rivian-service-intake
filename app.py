@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import html
 import os
+from copy import deepcopy
+from threading import Lock
 
 import streamlit as st
 import streamlit.components.v1
@@ -83,31 +85,184 @@ def _current_vehicle() -> dict[str, str]:
     return dict(vehicle)
 
 
-def _sync_editor() -> None:
-    """Mirror the editor widget into the plain transcript key and mark it edited."""
-    st.session_state["transcript"] = st.session_state["editor_text"]
-    st.session_state["dirty"] = True
+def _conversation_states() -> dict[str, dict]:
+    states = st.session_state.setdefault("conversation_states", {})
+    for state in states.values():
+        state.setdefault("analysis_pending", False)
+        state.setdefault("draft_revision", 0)
+        state.setdefault("pending_revision", None)
+        state.setdefault("analysis_lock", Lock())
+    return states
 
 
-def _store_result(result: dict, kind: str, loaded_id: str | None) -> None:
-    st.session_state["result"] = result
-    st.session_state["result_kind"] = kind
-    st.session_state["loaded_id"] = loaded_id
-    st.session_state["dirty"] = False
-    st.session_state["highlight"] = []
+def _new_own_state() -> dict:
+    return {
+        "transcript": "",
+        "editor_text": "",
+        "vehicle": {},
+        "editing": True,
+        "highlight": [],
+        "result": None,
+        "result_kind": "draft",
+        "loaded_id": None,
+        "dirty": False,
+        "analyzed_transcript": "",
+        "analyzed_vehicle": {},
+        "analysis_pending": False,
+        "draft_revision": 0,
+        "pending_revision": None,
+        "analysis_lock": Lock(),
+    }
 
 
-def _load_example(example_id: str) -> None:
+def _new_example_state(example_id: str) -> dict:
     example = EXAMPLE_BY_ID[example_id]
-    vehicle = {k: v for k, v in example["vehicle"].items() if v}
-    st.session_state["transcript"] = example["transcript"]
-    st.session_state["editor_text"] = example["transcript"]
-    st.session_state["vehicle"] = vehicle
-    st.session_state["editing"] = False
-    result = process_intake(
-        example["transcript"], vehicle, saved_result=example["result"]
+    transcript = example["transcript"]
+    vehicle = {key: value for key, value in example["vehicle"].items() if value}
+    state = {
+        "transcript": transcript,
+        "editor_text": transcript,
+        "vehicle": vehicle,
+        "editing": False,
+        "highlight": [],
+        "result": None,
+        "result_kind": "saved",
+        "loaded_id": example_id,
+        "dirty": False,
+        "analyzed_transcript": transcript,
+        "analyzed_vehicle": dict(vehicle),
+        "analysis_pending": False,
+        "draft_revision": 0,
+        "pending_revision": None,
+        "analysis_lock": Lock(),
+    }
+    _record_result(
+        state,
+        process_intake(transcript, vehicle, saved_result=example["result"]),
+        "saved",
+        example_id,
+        transcript,
+        vehicle,
     )
-    _store_result(result, "saved", example["id"])
+    return state
+
+
+def _record_result(
+    state: dict,
+    result: dict,
+    kind: str,
+    loaded_id: str | None,
+    transcript: str,
+    vehicle: dict[str, str],
+) -> None:
+    """Save a completed analysis directly to its stable per-conversation snapshot."""
+    pending_revision = state.get("pending_revision")
+    changed_during_analysis = (
+        pending_revision is not None
+        and state.get("draft_revision", 0) != pending_revision
+    )
+    dirty = (
+        state.get("transcript", transcript) != transcript
+        or state.get("vehicle", vehicle) != vehicle
+    )
+    editing = state.get("editing", False)
+    if result.get("valid") and not changed_during_analysis:
+        editing = False
+    # One mapping update leaves analysis_pending true until all result fields
+    # are ready for a fragment or a newly rerun script to install.
+    state.update(
+        {
+            "result": deepcopy(result),
+            "result_kind": kind,
+            "loaded_id": loaded_id,
+            "analyzed_transcript": transcript,
+            "analyzed_vehicle": dict(vehicle),
+            "highlight": [],
+            "dirty": dirty,
+            "editing": editing,
+            "pending_revision": None,
+            "analysis_pending": False,
+        }
+    )
+
+
+def _install_state(conversation_id: str, state: dict) -> None:
+    st.session_state["active_conversation_id"] = conversation_id
+    for key in (
+        "transcript",
+        "editor_text",
+        "vehicle",
+        "editing",
+        "highlight",
+        "result",
+        "result_kind",
+        "loaded_id",
+        "dirty",
+        "analysis_pending",
+    ):
+        st.session_state[key] = deepcopy(state.get(key, False if key == "analysis_pending" else None))
+
+
+def _save_active_draft() -> dict | None:
+    """Capture editable fields without replacing a result saved by a running call."""
+    conversation_id = st.session_state.get("active_conversation_id")
+    if conversation_id is None:
+        return None
+    state = _conversation_states().get(conversation_id)
+    if state is None:
+        state = _new_own_state() if conversation_id == OWN_ID else _new_example_state(conversation_id)
+        _conversation_states()[conversation_id] = state
+
+    transcript = st.session_state.get("transcript", state["transcript"])
+    editor_text = st.session_state.get("editor_text", transcript)
+    editing = bool(st.session_state.get("editing", state["editing"]))
+    if editing:
+        transcript = editor_text
+        st.session_state["transcript"] = transcript
+    vehicle = _current_vehicle()
+    draft_changed = any(
+        state.get(key) != value
+        for key, value in (
+            ("transcript", transcript),
+            ("editor_text", editor_text),
+            ("vehicle", vehicle),
+            ("editing", editing),
+        )
+    )
+    if draft_changed:
+        state["draft_revision"] = state.get("draft_revision", 0) + 1
+    state.update(
+        {
+            "transcript": transcript,
+            "editor_text": editor_text,
+            "vehicle": vehicle,
+            "editing": editing,
+            "dirty": (
+                transcript != state.get("analyzed_transcript", "")
+                or vehicle != state.get("analyzed_vehicle", {})
+            ),
+        }
+    )
+    return state
+
+
+def _install_result_fields(state: dict) -> None:
+    """Refresh result fields without touching widget-backed keys in the active run."""
+    for key in (
+        "result",
+        "result_kind",
+        "loaded_id",
+        "dirty",
+        "highlight",
+        "analysis_pending",
+    ):
+        st.session_state[key] = deepcopy(state.get(key, False if key == "analysis_pending" else None))
+
+
+def _sync_editor() -> None:
+    """Mirror the editor widget into the durable conversation draft."""
+    st.session_state["transcript"] = st.session_state["editor_text"]
+    _save_active_draft()
 
 
 def _on_load_example() -> None:
@@ -118,7 +273,7 @@ def _on_load_example() -> None:
         return
     if selection in EXAMPLE_BY_ID:
         st.session_state["last_pick"] = selection
-        _load_example(selection)
+        _switch_conversation(selection)
         return
     # A click on the selected pill deselects it; restore the previous pick.
     st.session_state["example_select"] = st.session_state.get(
@@ -127,38 +282,90 @@ def _on_load_example() -> None:
 
 
 def _start_own_conversation() -> None:
-    st.session_state["transcript"] = ""
-    st.session_state["editor_text"] = ""
-    st.session_state["vehicle"] = {}
-    st.session_state["editing"] = True
-    st.session_state["highlight"] = []
-    st.session_state["result"] = None
-    st.session_state["result_kind"] = "draft"
-    st.session_state["loaded_id"] = None
-    st.session_state["dirty"] = False
+    _switch_conversation(OWN_ID)
+
+
+def _switch_conversation(conversation_id: str) -> None:
+    _save_active_draft()
+    states = _conversation_states()
+    state = states.get(conversation_id)
+    if state is None:
+        state = _new_own_state() if conversation_id == OWN_ID else _new_example_state(conversation_id)
+        states[conversation_id] = state
+    _install_state(conversation_id, state)
 
 
 def _enter_edit() -> None:
-    """When edit mode opens, seed the editor from the durable transcript."""
+    """Seed the editor when opened and capture the current mode."""
     if st.session_state.get("editing"):
         st.session_state["editor_text"] = st.session_state["transcript"]
+    _save_active_draft()
 
 
 def _set_highlight(items: list[dict[str, str]]) -> None:
-    st.session_state["highlight"] = [dict(item) for item in items]
+    highlight = [dict(item) for item in items]
+    st.session_state["highlight"] = highlight
+    conversation_id = st.session_state.get("active_conversation_id")
+    if conversation_id is not None:
+        state = _conversation_states().get(conversation_id)
+        if state is not None:
+            state["highlight"] = deepcopy(highlight)
     st.session_state["scroll_seq"] = st.session_state.get("scroll_seq", 0) + 1
 
 
 def _boot() -> None:
+    states = _conversation_states()
     if st.session_state.get("booted"):
+        # Streamlit can keep an older session alive across a code reload. Seed
+        # its pre-snapshot fields once, then use the conversation snapshots.
+        active_id = st.session_state.get("active_conversation_id")
+        if active_id not in PICKER_OPTIONS:
+            active_id = st.session_state.get("last_pick") or st.session_state.get("example_select")
+        if active_id in PICKER_OPTIONS and active_id not in states:
+            transcript = st.session_state.get("transcript", "")
+            vehicle = dict(st.session_state.get("vehicle") or {})
+            result = deepcopy(st.session_state.get("result"))
+            dirty = bool(st.session_state.get("dirty", False))
+            states[active_id] = {
+                "transcript": transcript,
+                "editor_text": st.session_state.get("editor_text", transcript),
+                "vehicle": vehicle,
+                "editing": bool(st.session_state.get("editing", active_id == OWN_ID)),
+                "highlight": deepcopy(st.session_state.get("highlight", [])),
+                "result": result,
+                "result_kind": st.session_state.get("result_kind", "draft"),
+                "loaded_id": st.session_state.get("loaded_id"),
+                "dirty": dirty,
+                "analyzed_transcript": transcript if result and not dirty else "",
+                "analyzed_vehicle": vehicle if result and not dirty else {},
+                "analysis_pending": False,
+                "draft_revision": 0,
+                "pending_revision": None,
+                "analysis_lock": Lock(),
+            }
+        if active_id in PICKER_OPTIONS:
+            st.session_state["active_conversation_id"] = active_id
         return
-    st.session_state["example_select"] = EXAMPLES[0]["id"]
-    st.session_state["last_pick"] = EXAMPLES[0]["id"]
-    st.session_state["editing"] = False
-    st.session_state["highlight"] = []
+    first_id = EXAMPLES[0]["id"]
+    state = _new_example_state(first_id)
+    states[first_id] = state
+    st.session_state["example_select"] = first_id
+    st.session_state["last_pick"] = first_id
     st.session_state["scroll_seq"] = 0
-    _load_example(EXAMPLES[0]["id"])
+    _install_state(first_id, state)
     st.session_state["booted"] = True
+
+
+@st.fragment(run_every=1)
+def _watch_active_analysis() -> None:
+    """Refresh the active conversation when a request finishes in an older run."""
+    conversation_id = st.session_state.get("active_conversation_id")
+    state = _conversation_states().get(conversation_id)
+    if state and state.get("analysis_pending"):
+        st.caption("Analysis is still running. This page updates when it finishes.")
+        return
+    st.session_state["_sync_active_conversation_id"] = conversation_id
+    st.rerun()
 
 
 def _turns_html(turns: list[dict[str, str]], highlight: dict[str, list[str]]) -> str:
@@ -338,12 +545,6 @@ def _write_up(result: dict, vehicle: dict[str, str], turns: list[dict[str, str]]
                 st.markdown(f"- {WRITE_UP_VEHICLE_LABELS[field]}: {_md(value)}")
 
 
-def _worth_retrying(result: dict) -> bool:
-    return any(
-        "No write-up was generated." in error for error in result.get("errors", [])
-    )
-
-
 st.set_page_config(page_title="Service intake", layout="wide")
 st.set_option("client.toolbarMode", "minimal")
 st.markdown(CSS, unsafe_allow_html=True)
@@ -352,8 +553,18 @@ st.title("Service intake")
 st.caption("A customer call becomes a technician write-up, where every detail cites the call.")
 
 _boot()
+sync_conversation_id = st.session_state.pop("_sync_active_conversation_id", None)
+if sync_conversation_id == st.session_state.get("active_conversation_id"):
+    active_id = st.session_state.get("active_conversation_id")
+    active_state = _conversation_states().get(active_id)
+    if active_id is not None and active_state is not None:
+        _install_state(active_id, active_state)
+active_state = _save_active_draft()
+if active_state is not None:
+    _install_result_fields(active_state)
 if st.session_state.pop("close_editor", False):
     st.session_state["editing"] = False
+    _save_active_draft()
 _apply_secret_env()
 settings = get_settings()
 transcript = st.session_state["transcript"]
@@ -397,23 +608,63 @@ with left:
         )
         st.caption("One turn per line, as 'Speaker: text'.")
         if settings.configured:
-            analyze_clicked = st.button("Analyze conversation", key="analyze", type="primary")
+            analysis_pending = bool(st.session_state.get("analysis_pending"))
+            analyze_clicked = st.button(
+                "Analyze conversation",
+                key="analyze",
+                type="primary",
+                disabled=analysis_pending,
+            )
         else:
             analyze_clicked = False
             st.button("Analyze conversation", key="analyze", type="primary", disabled=True)
             st.caption("Live analysis is unavailable on this deployment.")
         if analyze_clicked:
+            conversation_id = st.session_state["active_conversation_id"]
+            analysis_state = _save_active_draft()
+            analysis_transcript = analysis_state["transcript"]
+            analysis_vehicle = dict(analysis_state["vehicle"])
+            fresh = None
             with st.spinner("Analyzing..."):
-                fresh = process_intake(transcript, vehicle)
-                if _worth_retrying(fresh):
-                    fresh = process_intake(transcript, vehicle)
-            _store_result(fresh, "fresh", None)
-            if fresh.get("valid"):
+                with analysis_state["analysis_lock"]:
+                    request_started = not analysis_state.get("analysis_pending", False)
+                    if request_started:
+                        analysis_state["analysis_pending"] = True
+                        analysis_state["pending_revision"] = analysis_state.get("draft_revision", 0)
+                if request_started:
+                    try:
+                        fresh = process_intake(analysis_transcript, analysis_vehicle)
+                    except Exception:
+                        fresh = {
+                            "source": "live",
+                            "facts": [],
+                            "corrections": [],
+                            "conflicts": [],
+                            "questions": [],
+                            "handoff": "",
+                            "errors": ["Analysis could not finish. Try Analyze conversation again."],
+                            "valid": False,
+                            "model": settings.model,
+                        }
+                    # Save through the captured state object before another
+                    # Streamlit access can interrupt this run after a switch.
+                    _record_result(
+                        analysis_state,
+                        fresh,
+                        "fresh",
+                        None,
+                        analysis_transcript,
+                        analysis_vehicle,
+                    )
+            if st.session_state.get("active_conversation_id") != conversation_id:
+                st.stop()
+            _install_result_fields(analysis_state)
+            result = fresh if fresh is not None else analysis_state.get("result")
+            stale = bool(analysis_state["dirty"])
+            if fresh and fresh.get("valid") and not analysis_state["editing"]:
                 # Show the analyzed call as conversation turns, not as the editor.
                 st.session_state["close_editor"] = True
                 st.rerun()
-            result = fresh
-            stale = False
     else:
         try:
             turns = parse_transcript(transcript)
@@ -429,10 +680,15 @@ with left:
             if selected:
                 _scroll_to_line(_line_of(turns, selected[0]["turn_id"]))
 
+if st.session_state.get("analysis_pending"):
+    _watch_active_analysis()
+
 with right:
     st.subheader("Technician write-up")
     if stale:
         st.warning("The conversation changed. Analyze again to update the write-up.")
+    elif st.session_state.get("analysis_pending"):
+        st.info("Analysis is still running. This page updates when it finishes.")
     elif not result:
         st.info("Edit the conversation on the left, then click Analyze conversation.")
     if result and not stale:

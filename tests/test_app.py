@@ -27,6 +27,10 @@ def _conversation_html(at: AppTest) -> str:
     return "".join(str(item.value) for item in at.get("html"))
 
 
+def _pick_conversation(at: AppTest, conversation_id: str) -> None:
+    at.pills[0].set_value(conversation_id).run()
+
+
 def test_analyze_click_replaces_saved_write_up(monkeypatch) -> None:
     monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
 
@@ -103,33 +107,209 @@ def test_deselecting_the_selected_pill_keeps_the_conversation() -> None:
     assert at.session_state["transcript"] == transcript_before
 
 
-def test_failed_source_check_runs_one_retry(monkeypatch) -> None:
+def test_conversation_choices_restore_drafts_results_and_evidence_without_calls(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+    calls = {"count": 0}
+
+    def mock_request(**kwargs):
+        calls["count"] += 1
+        assert "clunk" in kwargs["transcript"]
+        return {
+            "facts": [{
+                "id": "F1",
+                "field": "noise",
+                "value": "clunk",
+                "evidence": [{
+                    "turn_id": "T1",
+                    "speaker": "Customer",
+                    "quote": "clunk",
+                }],
+            }],
+            "corrections": [],
+            "conflicts": [],
+            "questions": [],
+        }
+
+    monkeypatch.setattr(api, "request_extraction", mock_request)
+    at = _run_app()
+    own_draft = "Customer: I hear a clunk near the front."
+    example_id = examples[1]["id"]
+    other_example_id = examples[2]["id"]
+
+    _pick_conversation(at, "own")
+    at.text_area(key="editor_text").set_value(own_draft).run()
+    _pick_conversation(at, example_id)
+    assert at.session_state["active_conversation_id"] == example_id
+    assert calls["count"] == 0
+
+    at.toggle(key="editing").set_value(True).run()
+    edited_example = "Customer: This example has a private edit."
+    at.text_area(key="editor_text").set_value(edited_example).run()
+    _pick_conversation(at, other_example_id)
+    _pick_conversation(at, example_id)
+    assert at.session_state["transcript"] == edited_example
+    assert at.session_state["editing"] is True
+    assert at.session_state["dirty"] is True
+    assert not _write_up_present(at)
+    assert calls["count"] == 0
+
+    _pick_conversation(at, "own")
+    assert at.text_area(key="editor_text").value == own_draft
+    assert at.session_state["editing"] is True
+    assert at.session_state["result"] is None
+    assert calls["count"] == 0
+
+    at.button(key="analyze").click().run()
+    assert calls["count"] == 1
+    assert at.session_state["result_kind"] == "fresh"
+    assert at.session_state["result"]["valid"] is True
+    assert at.session_state["editing"] is False
+    at.button(key="hl-fact-0").click().run()
+    assert at.session_state["highlight"] == [{"turn_id": "T1", "quote": "clunk"}]
+
+    result = at.session_state["result"]
+    _pick_conversation(at, example_id)
+    _pick_conversation(at, "own")
+    assert at.session_state["transcript"] == own_draft
+    assert at.session_state["result"] == result
+    assert at.session_state["dirty"] is False
+    assert at.session_state["editing"] is False
+    assert at.session_state["highlight"] == [{"turn_id": "T1", "quote": "clunk"}]
+    assert '<mark class="ev">clunk</mark>' in _conversation_html(at)
+    assert _write_up_present(at)
+    assert calls["count"] == 1
+
+
+def test_failed_analysis_and_example_highlight_survive_choice_switches(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+    calls = {"count": 0}
+
+    def bad_request(**_kwargs):
+        calls["count"] += 1
+        return {
+            "facts": [{
+                "id": "F1",
+                "field": "noise",
+                "value": "humming",
+                "evidence": [{
+                    "turn_id": "T1",
+                    "speaker": "Customer",
+                    "quote": "quote that is absent",
+                }],
+            }],
+            "corrections": [],
+            "conflicts": [],
+            "questions": [],
+        }
+
+    monkeypatch.setattr(api, "request_extraction", bad_request)
+    at = _run_app()
+    first_id = examples[0]["id"]
+    second_id = examples[1]["id"]
+    at.button(key="hl-fact-0").click().run()
+    highlight = [{"turn_id": "T2", "quote": "creaking sound when I go over speed bumps"}]
+
+    _pick_conversation(at, second_id)
+    _pick_conversation(at, first_id)
+    assert at.session_state["highlight"] == highlight
+    assert "class=\"ev\"" in _conversation_html(at)
+
+    _pick_conversation(at, "own")
+    failed_draft = "Customer: The rear area has a humming sound."
+    at.text_area(key="editor_text").set_value(failed_draft).run()
+    at.button(key="analyze").click().run()
+    assert calls["count"] == 1
+    error = at.session_state["result"]["errors"][0]
+    assert at.session_state["result"]["valid"] is False
+
+    _pick_conversation(at, second_id)
+    _pick_conversation(at, "own")
+    assert at.session_state["result_kind"] == "fresh"
+    assert at.session_state["result"]["errors"] == [error]
+    assert at.session_state["transcript"] == failed_draft
+    assert at.session_state["editing"] is True
+    assert at.session_state["dirty"] is False
+    assert not _write_up_present(at)
+    assert any("Evidence" in item.value for item in at.error)
+    assert calls["count"] == 1
+
+
+def test_pending_analysis_disables_duplicate_and_shows_status(monkeypatch) -> None:
     monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
     calls = {"count": 0}
 
     def mock_request(**_kwargs):
         calls["count"] += 1
-        if calls["count"] == 1:
-            return {
-                "facts": [{
-                    "id": "F1",
-                    "field": "noise",
-                    "value": "humming",
-                    "evidence": [{
-                        "turn_id": "T2",
-                        "speaker": "Customer",
-                        "quote": "creaking sound",
-                    }],
-                }],
-                "corrections": [],
-                "conflicts": [],
-                "questions": [],
-            }
+        raise AssertionError("a pending conversation must not start another request")
+
+    monkeypatch.setattr(api, "request_extraction", mock_request)
+    at = _run_app()
+    _pick_conversation(at, "own")
+    state = at.session_state["conversation_states"]["own"]
+    state["analysis_pending"] = True
+    state["pending_revision"] = state["draft_revision"]
+    at.session_state["analysis_pending"] = True
+
+    at.run()
+
+    assert at.button(key="analyze").proto.disabled is True
+    assert any("Analysis is still running" in item.value for item in at.info)
+    assert calls["count"] == 0
+
+
+def test_unexpected_analysis_error_clears_pending_state(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+    original_process = api.process_intake
+    calls = {"count": 0}
+
+    def raise_live_error(transcript, vehicle, *, saved_result=None):
+        if saved_result is not None:
+            return original_process(transcript, vehicle, saved_result=saved_result)
+        calls["count"] += 1
+        raise RuntimeError("unexpected test failure")
+
+    monkeypatch.setattr(api, "process_intake", raise_live_error)
+    at = _run_app()
+    _pick_conversation(at, "own")
+    at.text_area(key="editor_text").set_value("Customer: I hear a humming noise.").run()
+    at.button(key="analyze").click().run()
+
+    state = at.session_state["conversation_states"]["own"]
+    assert calls["count"] == 1
+    assert state["analysis_pending"] is False
+    assert state["pending_revision"] is None
+    assert at.session_state["analysis_pending"] is False
+    assert state["result"]["valid"] is False
+    assert "Analysis could not finish" in state["result"]["errors"][0]
+
+
+def test_older_conversation_snapshots_get_pending_defaults() -> None:
+    at = _run_app()
+    conversation_id = at.session_state["active_conversation_id"]
+    state = at.session_state["conversation_states"][conversation_id]
+    for key in ("analysis_pending", "draft_revision", "pending_revision", "analysis_lock"):
+        state.pop(key, None)
+
+    at.run()
+
+    migrated = at.session_state["conversation_states"][conversation_id]
+    assert migrated["analysis_pending"] is False
+    assert migrated["draft_revision"] == 0
+    assert migrated["pending_revision"] is None
+    assert migrated["analysis_lock"] is not None
+
+
+def test_failed_source_check_does_not_repeat_the_model_call(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+    calls = {"count": 0}
+
+    def mock_request(**_kwargs):
+        calls["count"] += 1
         return {
             "facts": [{
                 "id": "F1",
                 "field": "noise",
-                "value": "creaking sound",
+                "value": "humming",
                 "evidence": [{
                     "turn_id": "T2",
                     "speaker": "Customer",
@@ -146,9 +326,10 @@ def test_failed_source_check_runs_one_retry(monkeypatch) -> None:
     at.toggle(key="editing").set_value(True).run()
     at.button(key="analyze").click().run()
 
-    assert calls["count"] == 2
-    assert at.session_state["result"]["valid"] is True
-    assert _write_up_present(at)
+    assert calls["count"] == 1
+    assert at.session_state["result"]["valid"] is False
+    assert not _write_up_present(at)
+    assert any("Evidence" in item.value for item in at.error)
 
 
 def test_invalid_saved_quote_displays_error_without_a_write_up(monkeypatch) -> None:
@@ -261,7 +442,7 @@ def test_source_chip_cites_the_evidence_that_contains_the_value(monkeypatch) -> 
     assert "Customer" in label and "line 2" in label
 
 
-def test_two_failed_source_checks_show_the_error_without_a_draft(monkeypatch) -> None:
+def test_failed_source_check_shows_the_error_without_a_draft(monkeypatch) -> None:
     monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
     calls = {"count": 0}
 
@@ -288,7 +469,7 @@ def test_two_failed_source_checks_show_the_error_without_a_draft(monkeypatch) ->
     at.toggle(key="editing").set_value(True).run()
     at.button(key="analyze").click().run()
 
-    assert calls["count"] == 2
+    assert calls["count"] == 1
     assert not _write_up_present(at)
     assert any("Evidence" in item.value for item in at.error)
     assert not at.get("download_button")

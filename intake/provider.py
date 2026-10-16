@@ -34,21 +34,35 @@ as "two weeks ago", "28,410 miles", "the front", or "only at low speeds". Do not
 whole sentences, acknowledgements, or yes and no replies, and skip turns that carry no
 service detail. Aim for the fewest facts that tell the story, usually five to ten.
 Evidence is always a JSON array, even when there is one item. Each quote must be an
-exact substring of the named parsed turn, with its exact speaker and turn ID. Do not
-infer causes, diagnoses, repairs, warranty coverage, promises, or appointments. Do not
-create a handoff. Preserve explicit corrections as previous and current values with
-separate source quotes; the quotes may be two distinct spans from the same turn.
-Preserve unexplained disagreement as a conflict, with each value tied to a separate
-source quote. Never report a fact that repeats one of a conflicted field's values. For
-single-value fields like mileage, model, year, and vin, report no facts at all for a
-conflicted field. For a corrected field, put only its final value in facts. Ask at most
-three neutral questions about information that is missing. Prioritize clarifying
-unresolved conflicts, then symptom-specific measurements and context, then onset,
-frequency, and operating conditions. For example, if a tire-pressure warning is reported
-without pressure readings, ask for the reading for each tire before asking for
-identifiers or general service history. Do not ask for a vehicle detail already present
-in the vehicle record. Return exactly one JSON object that follows the complete schema
-below. Do not use Markdown fences, comments, or prose.
+exact substring of the named parsed turn, with its exact speaker and turn ID. Keep
+quotes to the shortest exact span that proves the reported value, usually under 120
+characters. Do not infer causes, diagnoses, repairs, warranty coverage, promises, or
+appointments. Do not create a handoff. Include only service-relevant details a
+technician needs, omit filler, repeated statements, and administrative request status
+unless it affects the reported vehicle concern. Return at most twelve facts, four
+corrections, and four conflicts, prioritizing active symptoms, useful operating
+conditions, measurements, and vehicle details needed to identify the vehicle.
+Preserve a correction only when a speaker explicitly retracts or replaces an earlier
+value for the same field. Do not turn ordinary chronology, uncertain memory, or later
+unrelated request status into a correction. For example, a customer's account that a
+family member said Wednesday and the customer's own memory of Friday are separate
+recollections, not a correction, unless the customer explicitly says one replaces the
+other. Every correction must have exactly one matching fact for its field whose value
+is exactly the correction's current_value. A corrected single-value field must have no
+other facts. A repeating field may keep independent service details, but never a fact
+for a superseded value. Include exact evidence for the previous and current values; the
+quotes may be two distinct spans from the same turn. If the final value is not a
+service-relevant fact, omit the correction. Preserve unexplained disagreement as a
+conflict, with each value tied to a separate source quote. Never
+report a fact that repeats one of a conflicted field's values. For single-value fields
+like mileage, model, year, and vin, report no facts at all for a conflicted field. Ask
+at most three neutral questions about information that is missing. Prioritize
+clarifying unresolved conflicts, then symptom-specific measurements and context, then
+onset, frequency, and operating conditions. For example, if a tire-pressure warning
+is reported without pressure readings, ask for the reading for each tire before asking
+for identifiers or general service history. Do not ask for a vehicle detail already
+present in the vehicle record. Return exactly one JSON object that follows the complete
+schema below. Do not use Markdown fences, comments, or prose.
 A fact has id (F1, F2, ...), field, value, evidence. A correction has field,
 previous_value, current_value, evidence. A conflict has field, values, evidence. Use
 empty arrays for empty sections."""
@@ -147,6 +161,8 @@ def request_extraction(
         "temperature": 0,
         "max_tokens": MAX_OUTPUT_TOKENS,
     }
+    if settings.model.casefold() == "deepseek-v4.1-flash":
+        request_body["reasoning_effort"] = "low"
     encoded_request = json.dumps(request_body, ensure_ascii=False).encode("utf-8")
     if len(encoded_request) > MAX_REQUEST_BODY_BYTES or len(transcript) > MAX_TRANSCRIPT_CHARS:
         raise ProviderError("The request is too large to send to the model.")
