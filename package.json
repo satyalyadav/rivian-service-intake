@@ -1,0 +1,12 @@
+{
+  "name": "rivian-service-intake-evals",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Promptfoo checks for the service intake prototype",
+  "scripts": {
+    "eval": "promptfoo eval --max-concurrency 1 --no-cache --no-share --no-write --no-table --no-progress-bar"
+  },
+  "devDependencies": {
+    "promptfoo": "0.124.1"
+  }
+}

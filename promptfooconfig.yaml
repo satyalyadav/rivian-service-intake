@@ -1,0 +1,14 @@
+description: Six synthetic service intake cases through the app's Python pipeline
+prompts:
+  - "{{case_id}}"
+providers:
+  - file://evals/provider.py:call_api
+tests:
+  - file://evals/cases.py:generate_tests
+evaluateOptions:
+  maxConcurrency: 1
+defaultTest:
+  assert:
+    - type: python
+      value: file://evals/assertions.py:get_assert
+outputPath: evals/promptfoo-results.json

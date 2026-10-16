@@ -1,0 +1,122 @@
+from __future__ import annotations
+
+from copy import deepcopy
+from pathlib import Path
+
+import httpx
+from streamlit.testing.v1 import AppTest
+
+from intake import api, provider
+from intake.examples import examples
+from intake.ui_helpers import highlighted_text_html
+
+
+APP_PATH = Path(__file__).resolve().parents[1] / "app.py"
+
+
+def _run_app() -> AppTest:
+    return AppTest.from_file(APP_PATH, default_timeout=8).run()
+
+
+def test_analyze_click_replaces_saved_note_without_another_interaction(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+
+    def mock_request(**_kwargs):
+        return {
+            "facts": [{
+                "id": "F1",
+                "field": "concern",
+                "value": "grinding noise when I turn left slowly",
+                "evidence": [{
+                    "turn_id": "T1",
+                    "speaker": "Customer",
+                    "quote": "I hear a grinding noise when I turn left slowly.",
+                }],
+            }],
+            "corrections": [],
+            "conflicts": [],
+            "questions": ["When did you first notice the grinding noise?"],
+        }
+
+    monkeypatch.setattr(api, "request_extraction", mock_request)
+    at = _run_app()
+    at.session_state["last_analyze_ts"] = 0.0
+
+    at.button(key="analyze").click().run()
+
+    assert at.session_state["result_kind"] == "fresh"
+    assert any("Fresh model result" in item.value for item in at.markdown)
+    assert len(at.code) == 1
+    assert "Concern: \"grinding noise when I turn left slowly\"" in at.code[0].value
+    assert "Noise:" not in at.code[0].value
+
+
+def test_transcript_and_vehicle_edits_hide_the_old_handoff() -> None:
+    at = _run_app()
+    assert len(at.code) == 1
+
+    at.text_area(key="transcript_editor").set_value("Customer: I hear a changed sound.")
+    at.text_input(key="veh_mileage").set_value("29999")
+    at.run()
+
+    assert len(at.code) == 0
+    assert any("Inputs changed since this result." in item.value for item in at.warning)
+
+
+def test_invalid_saved_quote_displays_error_without_a_handoff(monkeypatch) -> None:
+    altered_examples = deepcopy(examples)
+    altered_examples[0]["result"]["facts"][0]["evidence"][0]["quote"] = "quote absent from the transcript"
+    monkeypatch.setattr(api, "list_examples", lambda: deepcopy(altered_examples))
+
+    at = _run_app()
+
+    assert len(at.code) == 0
+    assert any("Evidence" in item.value for item in at.error)
+    assert any("No handoff generated." in item.value for item in at.caption)
+
+
+def test_http_500_shows_safe_error_and_removes_the_saved_handoff(monkeypatch) -> None:
+    monkeypatch.setenv("INTAKE_API_KEY", "test-only-secret")
+    monkeypatch.setenv("INTAKE_PROCESS_REQUEST_LIMIT", "2")
+    monkeypatch.setattr(provider, "_request_count", 0)
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(500, text="test-only-secret response detail")
+
+    original_client = httpx.Client
+
+    def mock_client(*args, **kwargs) -> httpx.Client:
+        kwargs["transport"] = httpx.MockTransport(handler)
+        return original_client(*args, **kwargs)
+
+    monkeypatch.setattr(provider.httpx, "Client", mock_client)
+    at = _run_app()
+    assert len(at.code) == 1
+    at.session_state["last_analyze_ts"] = 0.0
+
+    at.button(key="analyze").click().run()
+
+    assert len(requests) == 1
+    assert at.session_state["result_kind"] == "fresh"
+    assert len(at.code) == 0
+    assert any("provider returned HTTP 500" in item.value for item in at.error)
+    assert all("test-only-secret" not in item.value for item in at.error)
+    assert any("Analysis could not finish" in item.value for item in at.markdown)
+    assert not any("Fresh model result" in item.value for item in at.markdown)
+
+
+def test_overlapping_highlights_escape_raw_text_before_marking() -> None:
+    raw = 'keep mark class="ev" & <script>alert(1)</script>'
+    marked = highlighted_text_html(
+        raw,
+        ['mark class="ev" & <script>alert(1)</script>', 'class="ev" & <script>'],
+    )
+
+    assert marked == (
+        'keep <mark class="ev">mark class=&quot;ev&quot; &amp; '
+        '&lt;script&gt;alert(1)&lt;/script&gt;</mark>'
+    )
+    assert marked.count('<mark class="ev">') == 1
+    assert "<script>" not in marked

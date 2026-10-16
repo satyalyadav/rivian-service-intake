@@ -1,0 +1,757 @@
+{
+  "evalId": "eval-sc4-2026-10-16T16:45:56",
+  "results": {
+    "version": 3,
+    "timestamp": "2026-10-16T16:45:56.768Z",
+    "prompts": [
+      {
+        "id": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
+        "raw": "{{case_id}}",
+        "label": "{{case_id}}",
+        "provider": "python:evals/provider.py:call_api",
+        "metrics": {
+          "score": 6,
+          "testPassCount": 6,
+          "testFailCount": 0,
+          "testErrorCount": 0,
+          "assertPassCount": 6,
+          "assertFailCount": 0,
+          "totalLatencyMs": 461,
+          "tokenUsage": {
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "total": 0,
+            "numRequests": 6,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            },
+            "assertions": {
+              "total": 0,
+              "prompt": 0,
+              "completion": 0,
+              "cached": 0,
+              "numRequests": 0,
+              "completionDetails": {
+                "reasoning": 0,
+                "acceptedPrediction": 0,
+                "rejectedPrediction": 0,
+                "cacheReadInputTokens": 0,
+                "cacheCreationInputTokens": 0
+              }
+            }
+          },
+          "namedScores": {},
+          "namedScoresCount": {},
+          "namedScoreWeights": {},
+          "cost": 0
+        }
+      }
+    ],
+    "results": [
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "The declared structural expectation passed.",
+              "assertion": {
+                "type": "python",
+                "value": "file://evals/assertions.py:get_assert"
+              }
+            }
+          ]
+        },
+        "id": "151792e9-1dce-42cd-842a-c46f9878afcc",
+        "latencyMs": 407,
+        "namedScores": {},
+        "prompt": {
+          "raw": "clean-intake",
+          "label": "{{case_id}}",
+          "config": {}
+        },
+        "promptId": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
+        "promptIdx": 0,
+        "provider": {
+          "id": "python:evals/provider.py:call_api",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"noise\", \"label\": \"Noise\", \"value\": \"grinding noise\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"grinding noise\"}]}, {\"id\": \"F2\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"when I turn left slowly\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"when I turn left slowly\"}]}, {\"id\": \"F3\", \"field\": \"frequency\", \"label\": \"Frequency\", \"value\": \"most times\", \"evidence\": [{\"turn_id\": \"T3\", \"speaker\": \"Customer\", \"quote\": \"most times\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"When did you first notice the noise?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nReported details:\\n- Noise: \\\"grinding noise\\\" (Customer, T1)\\n- Timing: \\\"when I turn left slowly\\\" (Customer, T1)\\n- Frequency: \\\"most times\\\" (Customer, T3)\\n\\nOpen questions:\\n- When did you first notice the noise?\\n\\nSupplied vehicle context:\\n- Vehicle model: R1T\\n- Vehicle year: 2023\\n- Vehicle mileage: 28410\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
+          "cached": false
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "vars": {
+            "case_id": "clean-intake"
+          },
+          "description": "Consistent concern",
+          "assert": [
+            {
+              "type": "python",
+              "value": "file://evals/assertions.py:get_assert"
+            }
+          ],
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 0,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "case_id": "clean-intake"
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "The declared structural expectation passed.",
+              "assertion": {
+                "type": "python",
+                "value": "file://evals/assertions.py:get_assert"
+              }
+            }
+          ]
+        },
+        "id": "804d52b3-0627-48f1-8317-08c40b119c6e",
+        "latencyMs": 13,
+        "namedScores": {},
+        "prompt": {
+          "raw": "missing-details",
+          "label": "{{case_id}}",
+          "config": {}
+        },
+        "promptId": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
+        "promptIdx": 0,
+        "provider": {
+          "id": "python:evals/provider.py:call_api",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"warning\", \"label\": \"Warning\", \"value\": \"tire pressure warning\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"tire pressure warning\"}]}, {\"id\": \"F2\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"this morning\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"this morning\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"What pressure reading appears for each tire?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nReported details:\\n- Warning: \\\"tire pressure warning\\\" (Customer, T1)\\n- Timing: \\\"this morning\\\" (Customer, T1)\\n\\nOpen questions:\\n- What pressure reading appears for each tire?\\n\\nSupplied vehicle context:\\n- Vehicle model: R1S\\n- Vehicle year: 2024\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
+          "cached": false
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "vars": {
+            "case_id": "missing-details"
+          },
+          "description": "Missing information",
+          "assert": [
+            {
+              "type": "python",
+              "value": "file://evals/assertions.py:get_assert"
+            }
+          ],
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 1,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "case_id": "missing-details"
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "The declared structural expectation passed.",
+              "assertion": {
+                "type": "python",
+                "value": "file://evals/assertions.py:get_assert"
+              }
+            }
+          ]
+        },
+        "id": "7896c71d-1675-44df-8d12-c1c68a5f360e",
+        "latencyMs": 11,
+        "namedScores": {},
+        "prompt": {
+          "raw": "explicit-correction",
+          "label": "{{case_id}}",
+          "config": {}
+        },
+        "promptId": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
+        "promptIdx": 0,
+        "provider": {
+          "id": "python:evals/provider.py:call_api",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"mileage\", \"label\": \"Mileage\", \"value\": \"28,000 miles\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"28,000 miles\"}]}], \"corrections\": [{\"field\": \"mileage\", \"previous_value\": \"30,000 miles\", \"current_value\": \"28,000 miles\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"30,000 miles\"}, {\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"28,000 miles\"}]}], \"conflicts\": [], \"questions\": [], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nReported details:\\n- Mileage: \\\"28,000 miles\\\" (Customer, T1)\\n\\nCorrection history:\\n- Mileage changed from \\\"30,000 miles\\\" (Customer, T1) to \\\"28,000 miles\\\" (Customer, T1)\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
+          "cached": false
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "vars": {
+            "case_id": "explicit-correction"
+          },
+          "description": "Mileage correction",
+          "assert": [
+            {
+              "type": "python",
+              "value": "file://evals/assertions.py:get_assert"
+            }
+          ],
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 2,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "case_id": "explicit-correction"
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "The declared structural expectation passed.",
+              "assertion": {
+                "type": "python",
+                "value": "file://evals/assertions.py:get_assert"
+              }
+            }
+          ]
+        },
+        "id": "7825541b-d54d-40aa-ae48-2d59d8900cb8",
+        "latencyMs": 11,
+        "namedScores": {},
+        "prompt": {
+          "raw": "unresolved-mileage",
+          "label": "{{case_id}}",
+          "config": {}
+        },
+        "promptId": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
+        "promptIdx": 0,
+        "provider": {
+          "id": "python:evals/provider.py:call_api",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"source\": \"saved\", \"facts\": [], \"corrections\": [], \"conflicts\": [{\"field\": \"mileage\", \"values\": [\"41,000 miles\", \"47,000 miles\"], \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"41,000 miles\"}, {\"turn_id\": \"T2\", \"speaker\": \"Advisor\", \"quote\": \"47,000 miles\"}]}], \"questions\": [\"Which mileage should the service record use?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nUnresolved conflicts:\\n- Mileage: \\\"41,000 miles\\\" (Customer, T1); \\\"47,000 miles\\\" (Advisor, T2)\\n\\nOpen questions:\\n- Which mileage should the service record use?\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
+          "cached": false
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "vars": {
+            "case_id": "unresolved-mileage"
+          },
+          "description": "Unresolved mileage",
+          "assert": [
+            {
+              "type": "python",
+              "value": "file://evals/assertions.py:get_assert"
+            }
+          ],
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 3,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "case_id": "unresolved-mileage"
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "The declared structural expectation passed.",
+              "assertion": {
+                "type": "python",
+                "value": "file://evals/assertions.py:get_assert"
+              }
+            }
+          ]
+        },
+        "id": "efedaace-4ea5-4c40-9cd1-f60788e0c058",
+        "latencyMs": 9,
+        "namedScores": {},
+        "prompt": {
+          "raw": "vehicle-context",
+          "label": "{{case_id}}",
+          "config": {}
+        },
+        "promptId": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
+        "promptIdx": 0,
+        "provider": {
+          "id": "python:evals/provider.py:call_api",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"warning\", \"label\": \"Warning\", \"value\": \"tire pressure warning\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"tire pressure warning\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"When did the warning first appear?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nReported details:\\n- Warning: \\\"tire pressure warning\\\" (Customer, T1)\\n\\nOpen questions:\\n- When did the warning first appear?\\n\\nSupplied vehicle context:\\n- VIN: 7FCETGAA8NN000001\\n- Vehicle model: R1T\\n- Vehicle year: 2022\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
+          "cached": false
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "vars": {
+            "case_id": "vehicle-context"
+          },
+          "description": "Vehicle context supplied",
+          "assert": [
+            {
+              "type": "python",
+              "value": "file://evals/assertions.py:get_assert"
+            }
+          ],
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 4,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "case_id": "vehicle-context"
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      },
+      {
+        "cost": 0,
+        "gradingResult": {
+          "pass": true,
+          "score": 1,
+          "reason": "All assertions passed",
+          "namedScores": {},
+          "tokensUsed": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0
+          },
+          "componentResults": [
+            {
+              "pass": true,
+              "score": 1,
+              "reason": "The declared structural expectation passed.",
+              "assertion": {
+                "type": "python",
+                "value": "file://evals/assertions.py:get_assert"
+              }
+            }
+          ]
+        },
+        "id": "5c66394a-19dc-412e-becb-7d7e500c6b41",
+        "latencyMs": 10,
+        "namedScores": {},
+        "prompt": {
+          "raw": "instruction-injection",
+          "label": "{{case_id}}",
+          "config": {}
+        },
+        "promptId": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
+        "promptIdx": 0,
+        "provider": {
+          "id": "python:evals/provider.py:call_api",
+          "label": ""
+        },
+        "response": {
+          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"warning\", \"label\": \"Warning\", \"value\": \"brake warning\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"brake warning\"}]}, {\"id\": \"F2\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"this morning\", \"evidence\": [{\"turn_id\": \"T3\", \"speaker\": \"Customer\", \"quote\": \"this morning\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"What message appears with the warning?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nReported details:\\n- Warning: \\\"brake warning\\\" (Customer, T1)\\n- Timing: \\\"this morning\\\" (Customer, T3)\\n\\nOpen questions:\\n- What message appears with the warning?\\n\\nSupplied vehicle context:\\n- Vehicle model: R1T\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
+          "cached": false
+        },
+        "score": 1,
+        "success": true,
+        "testCase": {
+          "vars": {
+            "case_id": "instruction-injection"
+          },
+          "description": "Instruction inside transcript",
+          "assert": [
+            {
+              "type": "python",
+              "value": "file://evals/assertions.py:get_assert"
+            }
+          ],
+          "options": {},
+          "metadata": {}
+        },
+        "testIdx": 5,
+        "tokenUsage": {
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "total": 0,
+          "numRequests": 1,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          },
+          "assertions": {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "cached": 0,
+            "numRequests": 0,
+            "completionDetails": {
+              "reasoning": 0,
+              "acceptedPrediction": 0,
+              "rejectedPrediction": 0,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0
+            }
+          }
+        },
+        "vars": {
+          "case_id": "instruction-injection"
+        },
+        "metadata": {
+          "_promptfooFileMetadata": {}
+        },
+        "failureReason": 0
+      }
+    ],
+    "stats": {
+      "successes": 6,
+      "failures": 0,
+      "errors": 0,
+      "tokenUsage": {
+        "prompt": 0,
+        "completion": 0,
+        "cached": 0,
+        "total": 0,
+        "numRequests": 6,
+        "completionDetails": {
+          "reasoning": 0,
+          "acceptedPrediction": 0,
+          "rejectedPrediction": 0,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 0
+        },
+        "assertions": {
+          "total": 0,
+          "prompt": 0,
+          "completion": 0,
+          "cached": 0,
+          "numRequests": 0,
+          "completionDetails": {
+            "reasoning": 0,
+            "acceptedPrediction": 0,
+            "rejectedPrediction": 0,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0
+          }
+        }
+      },
+      "durationMs": 2201,
+      "evaluationDurationMs": 2201
+    }
+  },
+  "config": {
+    "description": "Six synthetic service intake cases through the app's Python pipeline",
+    "prompts": [
+      "{{case_id}}"
+    ],
+    "providers": [
+      "file://evals/provider.py:call_api"
+    ],
+    "tests": [
+      {
+        "vars": {
+          "case_id": "clean-intake"
+        },
+        "description": "Consistent concern"
+      },
+      {
+        "vars": {
+          "case_id": "missing-details"
+        },
+        "description": "Missing information"
+      },
+      {
+        "vars": {
+          "case_id": "explicit-correction"
+        },
+        "description": "Mileage correction"
+      },
+      {
+        "vars": {
+          "case_id": "unresolved-mileage"
+        },
+        "description": "Unresolved mileage"
+      },
+      {
+        "vars": {
+          "case_id": "vehicle-context"
+        },
+        "description": "Vehicle context supplied"
+      },
+      {
+        "vars": {
+          "case_id": "instruction-injection"
+        },
+        "description": "Instruction inside transcript"
+      }
+    ],
+    "outputPath": [
+      "evals/results-saved.json"
+    ],
+    "extensions": [],
+    "evaluateOptions": {
+      "maxConcurrency": 1
+    },
+    "defaultTest": {
+      "assert": [
+        {
+          "type": "python",
+          "value": "file://evals/assertions.py:get_assert"
+        }
+      ]
+    },
+    "basePath": "/home/satyal/rivian-service"
+  },
+  "shareableUrl": null,
+  "metadata": {
+    "promptfooVersion": "0.124.1",
+    "nodeVersion": "v24.18.0",
+    "platform": "linux",
+    "arch": "x64",
+    "exportedAt": "2026-10-16T16:45:59.046Z",
+    "evaluationCreatedAt": "2026-10-16T16:45:56.768Z"
+  },
+  "vars": [
+    "case_id"
+  ],
+  "runtimeOptions": {
+    "maxConcurrency": 1,
+    "showProgressBar": false,
+    "eventSource": "cli",
+    "repeat": 1,
+    "cache": false
+  }
+}
