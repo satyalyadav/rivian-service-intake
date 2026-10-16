@@ -28,10 +28,14 @@ Only report facts directly stated in transcript turns. The vehicle record is con
 for avoiding questions about known vehicle details. Never extract it as a fact, cite
 it as evidence, invent a turn for it, or call it a speaker. Never use a speaker or turn
 ID that does not appear in the parsed transcript. Use only allowed field names from
-the schema. Copy each fact value as an exact substring of a transcript quote. Evidence
-is always a JSON array, even when there is one item. Each quote must be an exact
-substring of the named parsed turn, with its exact speaker and turn ID. Do not infer
-causes, diagnoses, repairs, warranty coverage, promises, or appointments. Do not
+the schema. Copy each fact value as an exact substring of a transcript quote. Keep
+each value short: the shortest exact span that still reads as a service detail, such
+as "two weeks ago", "28,410 miles", "the front", or "only at low speeds". Do not paste
+whole sentences, acknowledgements, or yes and no replies, and skip turns that carry no
+service detail. Aim for the fewest facts that tell the story, usually five to ten.
+Evidence is always a JSON array, even when there is one item. Each quote must be an
+exact substring of the named parsed turn, with its exact speaker and turn ID. Do not
+infer causes, diagnoses, repairs, warranty coverage, promises, or appointments. Do not
 create a handoff. Preserve explicit corrections as previous and current values with
 separate source quotes; the quotes may be two distinct spans from the same turn.
 Preserve unexplained disagreement as a conflict, with each value tied to a separate

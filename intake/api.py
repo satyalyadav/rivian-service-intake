@@ -15,7 +15,7 @@ from .validation import validate_vehicle
 
 
 def list_examples() -> list[dict[str, Any]]:
-    """Return isolated copies of the six synthetic review examples."""
+    """Return isolated copies of the four demo conversations."""
     return deepcopy(examples)
 
 

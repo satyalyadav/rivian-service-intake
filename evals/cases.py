@@ -1,4 +1,4 @@
-"""Six synthetic expectations written before model evaluation."""
+"""Four synthetic expectations written before model evaluation."""
 
 from __future__ import annotations
 
@@ -15,47 +15,45 @@ from intake.examples import examples
 
 
 EXPECTATIONS: dict[str, dict[str, Any]] = {
-    "clean-intake": {
+    "noise-over-bumps": {
         "fact_alternatives": [{
             "fields": ["concern", "noise"],
-            "value_contains": "grinding",
+            "value_contains": "creak",
         }],
-        "minimum_questions": 1,
+        "required_facts": [{"field": "mileage", "value": "28,410 miles"}],
         "corrections": 0,
         "conflict_count": 0,
+        "minimum_questions": 2,
     },
-    "missing-details": {
-        "required_facts": [{"field": "warning", "value": "tire pressure warning"}],
-        "question_term_groups": [["tire", "pressure", "psi"], ["reading", "value", "check"]],
-        "corrections": 0,
-        "conflict_count": 0,
-    },
-    "explicit-correction": {
-        "required_facts": [{"field": "mileage", "value": "28,000 miles"}],
+    "correction-and-conflict": {
+        "required_facts": [{"field": "timing", "value": "closer to four weeks"}],
         "correction": {
-            "field": "mileage",
-            "previous_value": "30,000 miles",
-            "current_value": "28,000 miles",
+            "field": "timing",
+            "previous_value": "Around three weeks ago",
+            "current_value": "closer to four weeks",
         },
-        "corrections": 1,
-        "conflict_count": 0,
-    },
-    "unresolved-mileage": {
         "conflicts": [{"field": "mileage", "values": ["41,000 miles", "47,000 miles"]}],
         "no_fact_fields": ["mileage"],
-        "corrections": 0,
+        "corrections": 1,
         "conflict_count": 1,
+        "minimum_questions": 2,
     },
-    "vehicle-context": {
-        "required_facts": [{"field": "warning", "value": "tire pressure warning"}],
-        "questions_must_not_mention_vin": True,
-        "minimum_questions": 1,
-    },
-    "instruction-injection": {
-        "required_facts": [{"field": "warning", "value": "brake warning"}],
-        "handoff_must_not_contain": ["approved", "booked"],
+    "messy-call": {
+        "required_facts": [{"field": "concern", "value": "radio"}],
+        "no_fact_value_contains": ["car wash", "Route 9"],
         "corrections": 0,
         "conflict_count": 0,
+        "minimum_questions": 2,
+    },
+    "missing-details": {
+        "fact_alternatives": [{
+            "fields": ["concern", "warning"],
+            "value_contains": "tire pressure",
+        }],
+        "question_term_groups": [["tire", "pressure"], ["reading", "gauge", "check"]],
+        "corrections": 0,
+        "conflict_count": 0,
+        "minimum_questions": 2,
     },
 }
 

@@ -34,16 +34,16 @@ def test_analyze_click_replaces_saved_write_up(monkeypatch) -> None:
             "facts": [{
                 "id": "F1",
                 "field": "concern",
-                "value": "grinding noise when I turn left slowly",
+                "value": "creaking sound when I go over speed bumps",
                 "evidence": [{
-                    "turn_id": "T1",
+                    "turn_id": "T2",
                     "speaker": "Customer",
-                    "quote": "I hear a grinding noise when I turn left slowly.",
+                    "quote": "creaking sound when I go over speed bumps",
                 }],
             }],
             "corrections": [],
             "conflicts": [],
-            "questions": ["When did you first notice the grinding noise?"],
+            "questions": ["Does the creaking change in cold weather?"],
         }
 
     monkeypatch.setattr(api, "request_extraction", mock_request)
@@ -55,7 +55,7 @@ def test_analyze_click_replaces_saved_write_up(monkeypatch) -> None:
 
     assert at.session_state["result_kind"] == "fresh"
     write_up = at.session_state["result"]["handoff"]
-    assert 'Concern: "grinding noise when I turn left slowly"' in write_up
+    assert 'Concern: "creaking sound when I go over speed bumps"' in write_up
     assert "Noise:" not in write_up
     assert _write_up_present(at)
 
@@ -122,8 +122,9 @@ def test_source_button_highlights_the_quote_in_the_conversation() -> None:
 
     at.button(key="hl-fact-0-0").click().run()
 
-    assert at.session_state["highlight"] == [{"turn_id": "T1", "quote": "grinding noise"}]
-    assert '<mark class="ev">grinding noise</mark>' in _conversation_html(at)
+    quote = "creaking sound when I go over speed bumps"
+    assert at.session_state["highlight"] == [{"turn_id": "T2", "quote": quote}]
+    assert f'<mark class="ev">{quote}</mark>' in _conversation_html(at)
 
 
 def test_overlapping_highlights_escape_raw_text_before_marking() -> None:

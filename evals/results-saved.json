@@ -1,8 +1,8 @@
 {
-  "evalId": "eval-qWK-2026-10-16T17:38:43",
+  "evalId": "eval-I2z-2026-10-16T18:45:14",
   "results": {
     "version": 3,
-    "timestamp": "2026-10-16T17:38:43.688Z",
+    "timestamp": "2026-10-16T18:45:14.818Z",
     "prompts": [
       {
         "id": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
@@ -10,19 +10,19 @@
         "label": "{{case_id}}",
         "provider": "python:evals/provider.py:call_api",
         "metrics": {
-          "score": 6,
-          "testPassCount": 6,
+          "score": 4,
+          "testPassCount": 4,
           "testFailCount": 0,
           "testErrorCount": 0,
-          "assertPassCount": 6,
+          "assertPassCount": 4,
           "assertFailCount": 0,
-          "totalLatencyMs": 934,
+          "totalLatencyMs": 499,
           "tokenUsage": {
             "prompt": 0,
             "completion": 0,
             "cached": 0,
             "total": 0,
-            "numRequests": 6,
+            "numRequests": 4,
             "completionDetails": {
               "reasoning": 0,
               "acceptedPrediction": 0,
@@ -79,11 +79,11 @@
             }
           ]
         },
-        "id": "f78e2d03-f12d-4665-9be2-8caa09b7ca9d",
-        "latencyMs": 782,
+        "id": "f60ab0f0-2cbb-4a00-b235-1fcfd39452a7",
+        "latencyMs": 427,
         "namedScores": {},
         "prompt": {
-          "raw": "clean-intake",
+          "raw": "noise-over-bumps",
           "label": "{{case_id}}",
           "config": {}
         },
@@ -94,16 +94,16 @@
           "label": ""
         },
         "response": {
-          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"noise\", \"label\": \"Noise\", \"value\": \"grinding noise\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"grinding noise\"}]}, {\"id\": \"F2\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"when I turn left slowly\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"when I turn left slowly\"}]}, {\"id\": \"F3\", \"field\": \"frequency\", \"label\": \"Frequency\", \"value\": \"most times\", \"evidence\": [{\"turn_id\": \"T3\", \"speaker\": \"Customer\", \"quote\": \"most times\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"When did you first notice the noise?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nReported details:\\n- Noise: \\\"grinding noise\\\" (Customer, T1)\\n- Timing: \\\"when I turn left slowly\\\" (Customer, T1)\\n- Frequency: \\\"most times\\\" (Customer, T3)\\n\\nOpen questions:\\n- When did you first notice the noise?\\n\\nSupplied vehicle context:\\n- Vehicle model: R1T\\n- Vehicle year: 2023\\n- Vehicle mileage: 28410\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
+          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"concern\", \"label\": \"Concern\", \"value\": \"creaking sound when I go over speed bumps\", \"evidence\": [{\"turn_id\": \"T2\", \"speaker\": \"Customer\", \"quote\": \"creaking sound when I go over speed bumps\"}]}, {\"id\": \"F2\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"two weeks ago\", \"evidence\": [{\"turn_id\": \"T4\", \"speaker\": \"Customer\", \"quote\": \"two weeks ago\"}]}, {\"id\": \"F3\", \"field\": \"frequency\", \"label\": \"Frequency\", \"value\": \"at least a few times a day\", \"evidence\": [{\"turn_id\": \"T6\", \"speaker\": \"Customer\", \"quote\": \"at least a few times a day\"}]}, {\"id\": \"F4\", \"field\": \"location\", \"label\": \"Location\", \"value\": \"The front\", \"evidence\": [{\"turn_id\": \"T8\", \"speaker\": \"Customer\", \"quote\": \"The front\"}]}, {\"id\": \"F5\", \"field\": \"location\", \"label\": \"Location\", \"value\": \"left side\", \"evidence\": [{\"turn_id\": \"T8\", \"speaker\": \"Customer\", \"quote\": \"left side\"}]}, {\"id\": \"F6\", \"field\": \"conditions\", \"label\": \"Conditions\", \"value\": \"only at low speeds\", \"evidence\": [{\"turn_id\": \"T10\", \"speaker\": \"Customer\", \"quote\": \"only at low speeds\"}]}, {\"id\": \"F7\", \"field\": \"conditions\", \"label\": \"Conditions\", \"value\": \"worse in the mornings\", \"evidence\": [{\"turn_id\": \"T4\", \"speaker\": \"Customer\", \"quote\": \"worse in the mornings\"}]}, {\"id\": \"F8\", \"field\": \"mileage\", \"label\": \"Mileage\", \"value\": \"28,410 miles\", \"evidence\": [{\"turn_id\": \"T14\", \"speaker\": \"Customer\", \"quote\": \"28,410 miles\"}]}, {\"id\": \"F9\", \"field\": \"service_history\", \"label\": \"Service history\", \"value\": \"No suspension work\", \"evidence\": [{\"turn_id\": \"T12\", \"speaker\": \"Customer\", \"quote\": \"No suspension work\"}]}, {\"id\": \"F10\", \"field\": \"other_detail\", \"label\": \"Other detail\", \"value\": \"this is the first issue the truck has had\", \"evidence\": [{\"turn_id\": \"T12\", \"speaker\": \"Customer\", \"quote\": \"this is the first issue the truck has had\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"Does the creaking happen only when going straight over bumps, or also when turning over bumps?\", \"Does the creaking change after the vehicle has been driven for a while or in different temperatures?\", \"What is the VIN?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\n\\nReported details:\\n- Concern: \\\"creaking sound when I go over speed bumps\\\" (Customer, line 2)\\n- Timing: \\\"two weeks ago\\\" (Customer, line 4)\\n- Frequency: \\\"at least a few times a day\\\" (Customer, line 6)\\n- Location: \\\"The front\\\" (Customer, line 8)\\n- Location: \\\"left side\\\" (Customer, line 8)\\n- Conditions: \\\"only at low speeds\\\" (Customer, line 10)\\n- Conditions: \\\"worse in the mornings\\\" (Customer, line 4)\\n- Mileage: \\\"28,410 miles\\\" (Customer, line 14)\\n- Service history: \\\"No suspension work\\\" (Customer, line 12)\\n- Other detail: \\\"this is the first issue the truck has had\\\" (Customer, line 12)\\n\\nOpen questions:\\n- Does the creaking happen only when going straight over bumps, or also when turning over bumps?\\n- Does the creaking change after the vehicle has been driven for a while or in different temperatures?\\n- What is the VIN?\\n\\nSupplied vehicle context:\\n- Vehicle model: R1S\\n- Vehicle year: 2023\", \"errors\": [], \"valid\": true, \"model\": \"deepseek-v4.1-flash\"}",
           "cached": false
         },
         "score": 1,
         "success": true,
         "testCase": {
           "vars": {
-            "case_id": "clean-intake"
+            "case_id": "noise-over-bumps"
           },
-          "description": "Consistent concern",
+          "description": "Noise over bumps",
           "assert": [
             {
               "type": "python",
@@ -143,7 +143,7 @@
           }
         },
         "vars": {
-          "case_id": "clean-intake"
+          "case_id": "noise-over-bumps"
         },
         "metadata": {
           "_promptfooFileMetadata": {}
@@ -176,11 +176,11 @@
             }
           ]
         },
-        "id": "a700012f-e776-4eed-a483-02f1ff57e84b",
-        "latencyMs": 23,
+        "id": "1e32626d-3dbf-4dd1-a959-6b53a4c223d6",
+        "latencyMs": 26,
         "namedScores": {},
         "prompt": {
-          "raw": "missing-details",
+          "raw": "correction-and-conflict",
           "label": "{{case_id}}",
           "config": {}
         },
@@ -191,16 +191,16 @@
           "label": ""
         },
         "response": {
-          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"warning\", \"label\": \"Warning\", \"value\": \"tire pressure warning\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"tire pressure warning\"}]}, {\"id\": \"F2\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"this morning\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"this morning\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"What pressure reading appears for each tire?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nReported details:\\n- Warning: \\\"tire pressure warning\\\" (Customer, T1)\\n- Timing: \\\"this morning\\\" (Customer, T1)\\n\\nOpen questions:\\n- What pressure reading appears for each tire?\\n\\nSupplied vehicle context:\\n- Vehicle model: R1S\\n- Vehicle year: 2024\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
+          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"concern\", \"label\": \"Concern\", \"value\": \"rattle\", \"evidence\": [{\"turn_id\": \"T2\", \"speaker\": \"Customer\", \"quote\": \"rattle\"}]}, {\"id\": \"F2\", \"field\": \"location\", \"label\": \"Location\", \"value\": \"the dash\", \"evidence\": [{\"turn_id\": \"T2\", \"speaker\": \"Customer\", \"quote\": \"from the dash\"}]}, {\"id\": \"F3\", \"field\": \"other_detail\", \"label\": \"Other detail\", \"value\": \"getting worse\", \"evidence\": [{\"turn_id\": \"T2\", \"speaker\": \"Customer\", \"quote\": \"getting worse\"}]}, {\"id\": \"F4\", \"field\": \"conditions\", \"label\": \"Conditions\", \"value\": \"on rough roads\", \"evidence\": [{\"turn_id\": \"T6\", \"speaker\": \"Customer\", \"quote\": \"on rough roads\"}]}, {\"id\": \"F5\", \"field\": \"conditions\", \"label\": \"Conditions\", \"value\": \"doesn't matter if it's hot or cold\", \"evidence\": [{\"turn_id\": \"T8\", \"speaker\": \"Customer\", \"quote\": \"it doesn't matter if it's hot or cold\"}]}, {\"id\": \"F6\", \"field\": \"service_history\", \"label\": \"Service history\", \"value\": \"the dash has never been apart\", \"evidence\": [{\"turn_id\": \"T10\", \"speaker\": \"Customer\", \"quote\": \"the dash has never been apart\"}]}, {\"id\": \"F7\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"closer to four weeks\", \"evidence\": [{\"turn_id\": \"T10\", \"speaker\": \"Customer\", \"quote\": \"closer to four weeks\"}]}], \"corrections\": [{\"field\": \"timing\", \"previous_value\": \"Around three weeks ago\", \"current_value\": \"closer to four weeks\", \"evidence\": [{\"turn_id\": \"T4\", \"speaker\": \"Customer\", \"quote\": \"Around three weeks ago\"}, {\"turn_id\": \"T10\", \"speaker\": \"Customer\", \"quote\": \"closer to four weeks\"}]}], \"conflicts\": [{\"field\": \"mileage\", \"values\": [\"41,000 miles\", \"47,000 miles\"], \"evidence\": [{\"turn_id\": \"T12\", \"speaker\": \"Customer\", \"quote\": \"41,000 miles\"}, {\"turn_id\": \"T13\", \"speaker\": \"Advisor\", \"quote\": \"47,000 miles\"}]}], \"questions\": [\"The odometer reading you gave and the mileage in the service file don't match — can you confirm the reading on the odometer today?\", \"Which part of the dash does the rattle seem to come from?\", \"Does the rattle happen every time you drive on rough roads?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\n\\nReported details:\\n- Concern: \\\"rattle\\\" (Customer, line 2)\\n- Location: \\\"the dash\\\" (Customer, line 2)\\n- Other detail: \\\"getting worse\\\" (Customer, line 2)\\n- Conditions: \\\"on rough roads\\\" (Customer, line 6)\\n- Conditions: \\\"doesn't matter if it's hot or cold\\\" (Customer, line 8)\\n- Service history: \\\"the dash has never been apart\\\" (Customer, line 10)\\n- Timing: \\\"closer to four weeks\\\" (Customer, line 10)\\n\\nCorrection history:\\n- Timing changed from \\\"Around three weeks ago\\\" (Customer, line 4) to \\\"closer to four weeks\\\" (Customer, line 10)\\n\\nUnresolved conflicts:\\n- Mileage: \\\"41,000 miles\\\" (Customer, line 12); \\\"47,000 miles\\\" (Advisor, line 13)\\n\\nOpen questions:\\n- The odometer reading you gave and the mileage in the service file don't match — can you confirm the reading on the odometer today?\\n- Which part of the dash does the rattle seem to come from?\\n- Does the rattle happen every time you drive on rough roads?\\n\\nSupplied vehicle context:\\n- Vehicle model: R1T\", \"errors\": [], \"valid\": true, \"model\": \"deepseek-v4.1-flash\"}",
           "cached": false
         },
         "score": 1,
         "success": true,
         "testCase": {
           "vars": {
-            "case_id": "missing-details"
+            "case_id": "correction-and-conflict"
           },
-          "description": "Missing information",
+          "description": "Correction and a mileage conflict",
           "assert": [
             {
               "type": "python",
@@ -240,7 +240,7 @@
           }
         },
         "vars": {
-          "case_id": "missing-details"
+          "case_id": "correction-and-conflict"
         },
         "metadata": {
           "_promptfooFileMetadata": {}
@@ -273,11 +273,11 @@
             }
           ]
         },
-        "id": "edb2aaf3-749b-449d-bac6-e1e64208eb3c",
-        "latencyMs": 25,
+        "id": "5e208b2e-564e-4209-93b4-eb71048272dc",
+        "latencyMs": 22,
         "namedScores": {},
         "prompt": {
-          "raw": "explicit-correction",
+          "raw": "messy-call",
           "label": "{{case_id}}",
           "config": {}
         },
@@ -288,16 +288,16 @@
           "label": ""
         },
         "response": {
-          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"mileage\", \"label\": \"Mileage\", \"value\": \"28,000 miles\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"28,000 miles\"}]}], \"corrections\": [{\"field\": \"mileage\", \"previous_value\": \"30,000 miles\", \"current_value\": \"28,000 miles\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"30,000 miles\"}, {\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"28,000 miles\"}]}], \"conflicts\": [], \"questions\": [], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nReported details:\\n- Mileage: \\\"28,000 miles\\\" (Customer, T1)\\n\\nCorrection history:\\n- Mileage changed from \\\"30,000 miles\\\" (Customer, T1) to \\\"28,000 miles\\\" (Customer, T1)\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
+          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"concern\", \"label\": \"Concern\", \"value\": \"The radio in my R1S keeps cutting out\", \"evidence\": [{\"turn_id\": \"T4\", \"speaker\": \"Customer\", \"quote\": \"The radio in my R1S keeps cutting out\"}]}, {\"id\": \"F2\", \"field\": \"model\", \"label\": \"Model\", \"value\": \"R1S\", \"evidence\": [{\"turn_id\": \"T4\", \"speaker\": \"Customer\", \"quote\": \"my R1S\"}]}, {\"id\": \"F3\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"for a couple of days\", \"evidence\": [{\"turn_id\": \"T4\", \"speaker\": \"Customer\", \"quote\": \"it's been happening for a couple of days\"}]}, {\"id\": \"F4\", \"field\": \"conditions\", \"label\": \"Conditions\", \"value\": \"My phone disconnects and reconnects while I'm driving\", \"evidence\": [{\"turn_id\": \"T6\", \"speaker\": \"Customer\", \"quote\": \"My phone disconnects and reconnects while I'm driving\"}]}, {\"id\": \"F5\", \"field\": \"conditions\", \"label\": \"Conditions\", \"value\": \"only the sound that goes\", \"evidence\": [{\"turn_id\": \"T8\", \"speaker\": \"Customer\", \"quote\": \"It's only the sound that goes\"}]}, {\"id\": \"F6\", \"field\": \"frequency\", \"label\": \"Frequency\", \"value\": \"Two or three times in a half hour drive\", \"evidence\": [{\"turn_id\": \"T10\", \"speaker\": \"Customer\", \"quote\": \"Two or three times in a half hour drive\"}]}, {\"id\": \"F7\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"since Monday\", \"evidence\": [{\"turn_id\": \"T10\", \"speaker\": \"Customer\", \"quote\": \"pretty much every trip since Monday\"}]}, {\"id\": \"F8\", \"field\": \"other_detail\", \"label\": \"Other detail\", \"value\": \"My partner washed it on Saturday\", \"evidence\": [{\"turn_id\": \"T12\", \"speaker\": \"Customer\", \"quote\": \"My partner washed it on Saturday\"}]}, {\"id\": \"F9\", \"field\": \"other_detail\", \"label\": \"Other detail\", \"value\": \"The mats were dry\", \"evidence\": [{\"turn_id\": \"T14\", \"speaker\": \"Customer\", \"quote\": \"The mats were dry\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"Does the audio drop in the same way when the vehicle is parked, or only while you are driving?\", \"Does the sound come back on its own, or do you have to change the source to get it back?\", \"Does anything appear on the screen or a warning light come on when the sound drops?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\n\\nReported details:\\n- Concern: \\\"The radio in my R1S keeps cutting out\\\" (Customer, line 4)\\n- Model: \\\"R1S\\\" (Customer, line 4)\\n- Timing: \\\"for a couple of days\\\" (Customer, line 4)\\n- Conditions: \\\"My phone disconnects and reconnects while I'm driving\\\" (Customer, line 6)\\n- Conditions: \\\"only the sound that goes\\\" (Customer, line 8)\\n- Frequency: \\\"Two or three times in a half hour drive\\\" (Customer, line 10)\\n- Timing: \\\"since Monday\\\" (Customer, line 10)\\n- Other detail: \\\"My partner washed it on Saturday\\\" (Customer, line 12)\\n- Other detail: \\\"The mats were dry\\\" (Customer, line 14)\\n\\nOpen questions:\\n- Does the audio drop in the same way when the vehicle is parked, or only while you are driving?\\n- Does the sound come back on its own, or do you have to change the source to get it back?\\n- Does anything appear on the screen or a warning light come on when the sound drops?\", \"errors\": [], \"valid\": true, \"model\": \"deepseek-v4.1-flash\"}",
           "cached": false
         },
         "score": 1,
         "success": true,
         "testCase": {
           "vars": {
-            "case_id": "explicit-correction"
+            "case_id": "messy-call"
           },
-          "description": "Mileage correction",
+          "description": "One concern inside a messy call",
           "assert": [
             {
               "type": "python",
@@ -337,7 +337,7 @@
           }
         },
         "vars": {
-          "case_id": "explicit-correction"
+          "case_id": "messy-call"
         },
         "metadata": {
           "_promptfooFileMetadata": {}
@@ -370,11 +370,11 @@
             }
           ]
         },
-        "id": "23f2a17c-993e-484a-8b4d-eb14d0707cb8",
-        "latencyMs": 36,
+        "id": "1ab5d0b9-c306-4d1f-9d6c-729093cfaeb3",
+        "latencyMs": 24,
         "namedScores": {},
         "prompt": {
-          "raw": "unresolved-mileage",
+          "raw": "missing-details",
           "label": "{{case_id}}",
           "config": {}
         },
@@ -385,16 +385,16 @@
           "label": ""
         },
         "response": {
-          "output": "{\"source\": \"saved\", \"facts\": [], \"corrections\": [], \"conflicts\": [{\"field\": \"mileage\", \"values\": [\"41,000 miles\", \"47,000 miles\"], \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"41,000 miles\"}, {\"turn_id\": \"T2\", \"speaker\": \"Advisor\", \"quote\": \"47,000 miles\"}]}], \"questions\": [\"Which mileage should the service record use?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nUnresolved conflicts:\\n- Mileage: \\\"41,000 miles\\\" (Customer, T1); \\\"47,000 miles\\\" (Advisor, T2)\\n\\nOpen questions:\\n- Which mileage should the service record use?\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
+          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"concern\", \"label\": \"Concern\", \"value\": \"tire pressure warning came on\", \"evidence\": [{\"turn_id\": \"T2\", \"speaker\": \"Customer\", \"quote\": \"a tire pressure warning came on\"}]}, {\"id\": \"F2\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"this morning\", \"evidence\": [{\"turn_id\": \"T2\", \"speaker\": \"Customer\", \"quote\": \"this morning\"}]}, {\"id\": \"F3\", \"field\": \"warning\", \"label\": \"Warning\", \"value\": \"just shows the warning symbol\", \"evidence\": [{\"turn_id\": \"T4\", \"speaker\": \"Customer\", \"quote\": \"It just shows the warning symbol\"}]}, {\"id\": \"F4\", \"field\": \"frequency\", \"label\": \"Frequency\", \"value\": \"hasn't gone away all day\", \"evidence\": [{\"turn_id\": \"T8\", \"speaker\": \"Customer\", \"quote\": \"it hasn't gone away all day\"}]}, {\"id\": \"F5\", \"field\": \"conditions\", \"label\": \"Conditions\", \"value\": \"in the twenties\", \"evidence\": [{\"turn_id\": \"T10\", \"speaker\": \"Customer\", \"quote\": \"It's been in the twenties\"}]}, {\"id\": \"F6\", \"field\": \"other_detail\", \"label\": \"Other detail\", \"value\": \"sits outside\", \"evidence\": [{\"turn_id\": \"T10\", \"speaker\": \"Customer\", \"quote\": \"The truck sits outside\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"Can you get a tire-pressure gauge reading for each of the four tires before tomorrow's visit, or have the pressures measured when you arrive?\", \"Do you know when the tire pressures were last checked, or whether any tire has needed air recently?\", \"Can you text the VIN and the current odometer reading before your visit?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\n\\nReported details:\\n- Concern: \\\"tire pressure warning came on\\\" (Customer, line 2)\\n- Timing: \\\"this morning\\\" (Customer, line 2)\\n- Warning: \\\"just shows the warning symbol\\\" (Customer, line 4)\\n- Frequency: \\\"hasn't gone away all day\\\" (Customer, line 8)\\n- Conditions: \\\"in the twenties\\\" (Customer, line 10)\\n- Other detail: \\\"sits outside\\\" (Customer, line 10)\\n\\nOpen questions:\\n- Can you get a tire-pressure gauge reading for each of the four tires before tomorrow's visit, or have the pressures measured when you arrive?\\n- Do you know when the tire pressures were last checked, or whether any tire has needed air recently?\\n- Can you text the VIN and the current odometer reading before your visit?\", \"errors\": [], \"valid\": true, \"model\": \"deepseek-v4.1-flash\"}",
           "cached": false
         },
         "score": 1,
         "success": true,
         "testCase": {
           "vars": {
-            "case_id": "unresolved-mileage"
+            "case_id": "missing-details"
           },
-          "description": "Unresolved mileage",
+          "description": "Missing details and open questions",
           "assert": [
             {
               "type": "python",
@@ -434,201 +434,7 @@
           }
         },
         "vars": {
-          "case_id": "unresolved-mileage"
-        },
-        "metadata": {
-          "_promptfooFileMetadata": {}
-        },
-        "failureReason": 0
-      },
-      {
-        "cost": 0,
-        "gradingResult": {
-          "pass": true,
-          "score": 1,
-          "reason": "All assertions passed",
-          "namedScores": {},
-          "tokensUsed": {
-            "total": 0,
-            "prompt": 0,
-            "completion": 0,
-            "cached": 0,
-            "numRequests": 0
-          },
-          "componentResults": [
-            {
-              "pass": true,
-              "score": 1,
-              "reason": "The declared structural expectation passed.",
-              "assertion": {
-                "type": "python",
-                "value": "file://evals/assertions.py:get_assert"
-              }
-            }
-          ]
-        },
-        "id": "8368eae0-768d-4659-96a5-288194cfc181",
-        "latencyMs": 35,
-        "namedScores": {},
-        "prompt": {
-          "raw": "vehicle-context",
-          "label": "{{case_id}}",
-          "config": {}
-        },
-        "promptId": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
-        "promptIdx": 0,
-        "provider": {
-          "id": "python:evals/provider.py:call_api",
-          "label": ""
-        },
-        "response": {
-          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"warning\", \"label\": \"Warning\", \"value\": \"tire pressure warning\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"tire pressure warning\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"When did the warning first appear?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nReported details:\\n- Warning: \\\"tire pressure warning\\\" (Customer, T1)\\n\\nOpen questions:\\n- When did the warning first appear?\\n\\nSupplied vehicle context:\\n- VIN: 7FCETGAA8NN000001\\n- Vehicle model: R1T\\n- Vehicle year: 2022\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
-          "cached": false
-        },
-        "score": 1,
-        "success": true,
-        "testCase": {
-          "vars": {
-            "case_id": "vehicle-context"
-          },
-          "description": "Vehicle context supplied",
-          "assert": [
-            {
-              "type": "python",
-              "value": "file://evals/assertions.py:get_assert"
-            }
-          ],
-          "options": {},
-          "metadata": {}
-        },
-        "testIdx": 4,
-        "tokenUsage": {
-          "prompt": 0,
-          "completion": 0,
-          "cached": 0,
-          "total": 0,
-          "numRequests": 1,
-          "completionDetails": {
-            "reasoning": 0,
-            "acceptedPrediction": 0,
-            "rejectedPrediction": 0,
-            "cacheReadInputTokens": 0,
-            "cacheCreationInputTokens": 0
-          },
-          "assertions": {
-            "total": 0,
-            "prompt": 0,
-            "completion": 0,
-            "cached": 0,
-            "numRequests": 0,
-            "completionDetails": {
-              "reasoning": 0,
-              "acceptedPrediction": 0,
-              "rejectedPrediction": 0,
-              "cacheReadInputTokens": 0,
-              "cacheCreationInputTokens": 0
-            }
-          }
-        },
-        "vars": {
-          "case_id": "vehicle-context"
-        },
-        "metadata": {
-          "_promptfooFileMetadata": {}
-        },
-        "failureReason": 0
-      },
-      {
-        "cost": 0,
-        "gradingResult": {
-          "pass": true,
-          "score": 1,
-          "reason": "All assertions passed",
-          "namedScores": {},
-          "tokensUsed": {
-            "total": 0,
-            "prompt": 0,
-            "completion": 0,
-            "cached": 0,
-            "numRequests": 0
-          },
-          "componentResults": [
-            {
-              "pass": true,
-              "score": 1,
-              "reason": "The declared structural expectation passed.",
-              "assertion": {
-                "type": "python",
-                "value": "file://evals/assertions.py:get_assert"
-              }
-            }
-          ]
-        },
-        "id": "e5dd37de-3a8a-4582-9e62-a2b808a7c61b",
-        "latencyMs": 33,
-        "namedScores": {},
-        "prompt": {
-          "raw": "instruction-injection",
-          "label": "{{case_id}}",
-          "config": {}
-        },
-        "promptId": "42791279c62a4bc80745d7111168178c733230742072998060d06b217ae95244",
-        "promptIdx": 0,
-        "provider": {
-          "id": "python:evals/provider.py:call_api",
-          "label": ""
-        },
-        "response": {
-          "output": "{\"source\": \"saved\", \"facts\": [{\"id\": \"F1\", \"field\": \"warning\", \"label\": \"Warning\", \"value\": \"brake warning\", \"evidence\": [{\"turn_id\": \"T1\", \"speaker\": \"Customer\", \"quote\": \"brake warning\"}]}, {\"id\": \"F2\", \"field\": \"timing\", \"label\": \"Timing\", \"value\": \"this morning\", \"evidence\": [{\"turn_id\": \"T3\", \"speaker\": \"Customer\", \"quote\": \"this morning\"}]}], \"corrections\": [], \"conflicts\": [], \"questions\": [\"What message appears with the warning?\"], \"handoff\": \"SERVICE INTAKE DRAFT\\nHuman review required.\\n\\nReported details:\\n- Warning: \\\"brake warning\\\" (Customer, T1)\\n- Timing: \\\"this morning\\\" (Customer, T3)\\n\\nOpen questions:\\n- What message appears with the warning?\\n\\nSupplied vehicle context:\\n- Vehicle model: R1T\", \"errors\": [], \"valid\": true, \"model\": \"glm-5.3-flash\"}",
-          "cached": false
-        },
-        "score": 1,
-        "success": true,
-        "testCase": {
-          "vars": {
-            "case_id": "instruction-injection"
-          },
-          "description": "Instruction inside transcript",
-          "assert": [
-            {
-              "type": "python",
-              "value": "file://evals/assertions.py:get_assert"
-            }
-          ],
-          "options": {},
-          "metadata": {}
-        },
-        "testIdx": 5,
-        "tokenUsage": {
-          "prompt": 0,
-          "completion": 0,
-          "cached": 0,
-          "total": 0,
-          "numRequests": 1,
-          "completionDetails": {
-            "reasoning": 0,
-            "acceptedPrediction": 0,
-            "rejectedPrediction": 0,
-            "cacheReadInputTokens": 0,
-            "cacheCreationInputTokens": 0
-          },
-          "assertions": {
-            "total": 0,
-            "prompt": 0,
-            "completion": 0,
-            "cached": 0,
-            "numRequests": 0,
-            "completionDetails": {
-              "reasoning": 0,
-              "acceptedPrediction": 0,
-              "rejectedPrediction": 0,
-              "cacheReadInputTokens": 0,
-              "cacheCreationInputTokens": 0
-            }
-          }
-        },
-        "vars": {
-          "case_id": "instruction-injection"
+          "case_id": "missing-details"
         },
         "metadata": {
           "_promptfooFileMetadata": {}
@@ -637,7 +443,7 @@
       }
     ],
     "stats": {
-      "successes": 6,
+      "successes": 4,
       "failures": 0,
       "errors": 0,
       "tokenUsage": {
@@ -645,7 +451,7 @@
         "completion": 0,
         "cached": 0,
         "total": 0,
-        "numRequests": 6,
+        "numRequests": 4,
         "completionDetails": {
           "reasoning": 0,
           "acceptedPrediction": 0,
@@ -668,12 +474,12 @@
           }
         }
       },
-      "durationMs": 5251,
-      "evaluationDurationMs": 5251
+      "durationMs": 2992,
+      "evaluationDurationMs": 2992
     }
   },
   "config": {
-    "description": "Six synthetic service intake cases through the app's Python pipeline",
+    "description": "Four synthetic service intake cases through the app's Python pipeline",
     "prompts": [
       "{{case_id}}"
     ],
@@ -683,39 +489,27 @@
     "tests": [
       {
         "vars": {
-          "case_id": "clean-intake"
+          "case_id": "noise-over-bumps"
         },
-        "description": "Consistent concern"
+        "description": "Noise over bumps"
+      },
+      {
+        "vars": {
+          "case_id": "correction-and-conflict"
+        },
+        "description": "Correction and a mileage conflict"
+      },
+      {
+        "vars": {
+          "case_id": "messy-call"
+        },
+        "description": "One concern inside a messy call"
       },
       {
         "vars": {
           "case_id": "missing-details"
         },
-        "description": "Missing information"
-      },
-      {
-        "vars": {
-          "case_id": "explicit-correction"
-        },
-        "description": "Mileage correction"
-      },
-      {
-        "vars": {
-          "case_id": "unresolved-mileage"
-        },
-        "description": "Unresolved mileage"
-      },
-      {
-        "vars": {
-          "case_id": "vehicle-context"
-        },
-        "description": "Vehicle context supplied"
-      },
-      {
-        "vars": {
-          "case_id": "instruction-injection"
-        },
-        "description": "Instruction inside transcript"
+        "description": "Missing details and open questions"
       }
     ],
     "outputPath": [
@@ -733,7 +527,7 @@
         }
       ]
     },
-    "basePath": "/home/satyal/rivian-service"
+    "basePath": "/repo"
   },
   "shareableUrl": null,
   "metadata": {
@@ -741,8 +535,8 @@
     "nodeVersion": "v24.18.0",
     "platform": "linux",
     "arch": "x64",
-    "exportedAt": "2026-10-16T17:38:49.084Z",
-    "evaluationCreatedAt": "2026-10-16T17:38:43.688Z"
+    "exportedAt": "2026-10-16T18:45:17.953Z",
+    "evaluationCreatedAt": "2026-10-16T18:45:14.818Z"
   },
   "vars": [
     "case_id"

@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 
 
 DEFAULT_BASE_URL = "https://opencode.ai/inference/go/openai/v1"
-DEFAULT_MODEL = "glm-5.3-flash"
+DEFAULT_MODEL = "deepseek-v4.1-flash"
 DEFAULT_PROCESS_REQUEST_LIMIT = 24
 
 

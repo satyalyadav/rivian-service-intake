@@ -1,4 +1,4 @@
-description: Six synthetic service intake cases through the app's Python pipeline
+description: Four synthetic service intake cases through the app's Python pipeline
 prompts:
   - "{{case_id}}"
 providers:

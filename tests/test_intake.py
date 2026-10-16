@@ -222,13 +222,13 @@ def test_model_accepts_only_one_full_json_fence() -> None:
 
 
 def test_resolved_and_unresolved_values_cannot_share_a_field() -> None:
-    example = examples[3]
+    example = examples[1]
     saved = deepcopy(example["result"])
     saved["facts"] = [{
         "id": "F1",
         "field": "mileage",
         "value": "41,000 miles",
-        "evidence": [{"turn_id": "T1", "speaker": "Customer", "quote": "41,000 miles"}],
+        "evidence": [{"turn_id": "T12", "speaker": "Customer", "quote": "41,000 miles"}],
     }]
 
     result = process_intake(example["transcript"], example["vehicle"], saved_result=saved)
@@ -284,11 +284,20 @@ def test_write_up_attributes_value_to_evidence_that_contains_it() -> None:
 
 
 def test_known_vin_filter_does_not_drop_questions_about_driving() -> None:
-    example = examples[4]
-    saved = deepcopy(example["result"])
-    saved["questions"] = ["Could the driving noise change at speed?"]
+    transcript = "Customer: I hear a grinding noise when I drive."
+    saved = {
+        "facts": [{
+            "id": "F1",
+            "field": "noise",
+            "value": "grinding noise",
+            "evidence": [{"turn_id": "T1", "speaker": "Customer", "quote": "grinding noise"}],
+        }],
+        "corrections": [],
+        "conflicts": [],
+        "questions": ["Could the driving noise change at speed?"],
+    }
 
-    result = process_intake(example["transcript"], example["vehicle"], saved_result=saved)
+    result = process_intake(transcript, {"vin": "7FCETGAA8NN000001"}, saved_result=saved)
 
     assert result["valid"]
     assert result["questions"] == ["Could the driving noise change at speed?"]
@@ -311,7 +320,7 @@ def test_settings_representation_never_includes_key(monkeypatch: pytest.MonkeyPa
     settings = get_settings()
 
     assert settings.configured
-    assert "glm-5.3-flash" in repr(settings)
+    assert "deepseek-v4.1-flash" in repr(settings)
     assert "test-secret-value" not in repr(settings)
 
 
@@ -416,9 +425,9 @@ def test_process_request_cap_is_bounded(monkeypatch: pytest.MonkeyPatch) -> None
     assert provider.current_request_count() == 1
 
 
-def test_promptfoo_contains_six_cases_through_same_pipeline() -> None:
+def test_promptfoo_contains_four_cases_through_same_pipeline() -> None:
     assert [case["id"] for case in CASES] == [example["id"] for example in examples]
-    assert len(generate_tests()) == 6
+    assert len(generate_tests()) == 4
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda case: case["id"])
@@ -433,25 +442,45 @@ def test_saved_promptfoo_expectation(case: dict) -> None:
     assert assertion["pass"], assertion["reason"]
 
 
-def test_clean_intake_accepts_a_supported_concern_or_noise_fact() -> None:
-    example = next(item for item in examples if item["id"] == "clean-intake")
+def test_noise_over_bumps_accepts_a_supported_concern_or_noise_fact() -> None:
+    example = next(item for item in examples if item["id"] == "noise-over-bumps")
     saved = deepcopy(example["result"])
     saved["facts"][0]["field"] = "concern"
-    saved["facts"][0]["value"] = "grinding noise when I turn left slowly"
-    saved["facts"][0]["evidence"][0]["quote"] = "I hear a grinding noise when I turn left slowly."
+    saved["facts"][0]["value"] = "creaking sound when I go over speed bumps"
+    saved["facts"][0]["evidence"][0]["quote"] = "creaking sound when I go over speed bumps"
     result = process_intake(example["transcript"], example["vehicle"], saved_result=saved)
 
     with pytest.MonkeyPatch.context() as patch:
         patch.setenv("INTAKE_EVAL_MODE", "saved")
-        assertion = get_assert(json.dumps(result), {"vars": {"case_id": "clean-intake"}})
+        assertion = get_assert(json.dumps(result), {"vars": {"case_id": "noise-over-bumps"}})
 
     assert result["valid"]
     assert assertion["pass"], assertion["reason"]
 
 
 def test_explicit_correction_accepts_two_quotes_from_the_same_turn() -> None:
-    example = next(item for item in examples if item["id"] == "explicit-correction")
-    result = process_intake(example["transcript"], example["vehicle"], saved_result=example["result"])
+    transcript = "Customer: I have 30,000 miles. Sorry, it is 28,000 miles."
+    saved = {
+        "facts": [{
+            "id": "F1",
+            "field": "mileage",
+            "value": "28,000 miles",
+            "evidence": [{"turn_id": "T1", "speaker": "Customer", "quote": "28,000 miles"}],
+        }],
+        "corrections": [{
+            "field": "mileage",
+            "previous_value": "30,000 miles",
+            "current_value": "28,000 miles",
+            "evidence": [
+                {"turn_id": "T1", "speaker": "Customer", "quote": "30,000 miles"},
+                {"turn_id": "T1", "speaker": "Customer", "quote": "28,000 miles"},
+            ],
+        }],
+        "conflicts": [],
+        "questions": [],
+    }
+
+    result = process_intake(transcript, {}, saved_result=saved)
 
     assert result["valid"]
     assert result["corrections"][0]["evidence"] == [
@@ -461,18 +490,16 @@ def test_explicit_correction_accepts_two_quotes_from_the_same_turn() -> None:
 
 
 def test_required_warning_phrase_matches_a_supported_full_sentence() -> None:
-    example = next(item for item in examples if item["id"] == "vehicle-context")
+    example = next(item for item in examples if item["id"] == "missing-details")
     saved = deepcopy(example["result"])
-    saved["facts"][0]["value"] = "tire pressure warning is showing on the dash"
-    saved["facts"][0]["evidence"][0]["quote"] = (
-        "tire pressure warning is showing on the dash"
-    )
+    saved["facts"][0]["value"] = "tire pressure warning came on this morning"
+    saved["facts"][0]["evidence"][0]["quote"] = "a tire pressure warning came on this morning"
     result = process_intake(example["transcript"], example["vehicle"], saved_result=saved)
 
     with pytest.MonkeyPatch.context() as patch:
         patch.setenv("INTAKE_EVAL_MODE", "saved")
         assertion = get_assert(
-            json.dumps(result), {"vars": {"case_id": "vehicle-context"}}
+            json.dumps(result), {"vars": {"case_id": "missing-details"}}
         )
 
     assert result["valid"]

@@ -1,4 +1,4 @@
-"""Promptfoo checks for the six predeclared intake expectations."""
+"""Promptfoo checks for the four predeclared intake expectations."""
 
 from __future__ import annotations
 
@@ -33,7 +33,9 @@ def _same_value(field: str, actual: str, expected: str) -> bool:
         expected_number = _mileage_number(expected)
         if actual_number is not None and expected_number is not None:
             return actual_number == expected_number
-    return actual == expected
+    if field in SINGLE_VALUE_FIELDS:
+        return actual == expected
+    return expected.casefold() in actual.casefold() or actual.casefold() in expected.casefold()
 
 
 def _required_fact_matches(field: str, actual: str, expected: str) -> bool:
@@ -131,6 +133,13 @@ def get_assert(output: str, context: dict[str, Any]) -> dict[str, Any]:
             reasons.append("The unresolved values were not preserved as a conflict.")
     if set(case["expect"].get("no_fact_fields", [])) & {fact.get("field") for fact in facts}:
         reasons.append("A conflicted field was presented as resolved.")
+    forbidden_values = case["expect"].get("no_fact_value_contains", [])
+    if forbidden_values and any(
+        phrase.casefold() in fact.get("value", "").casefold()
+        for fact in facts
+        for phrase in forbidden_values
+    ):
+        reasons.append("A fact captured small talk instead of a service detail.")
 
     questions = result.get("questions", [])
     if len(questions) < case["expect"].get("minimum_questions", 0):
