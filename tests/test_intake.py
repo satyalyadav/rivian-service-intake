@@ -449,7 +449,7 @@ def test_provider_request_contract(monkeypatch: pytest.MonkeyPatch) -> None:
     assert result["source"] == "live" and result["valid"]
     assert body["response_format"] == {"type": "json_object"}
     assert body["max_tokens"] == provider.MAX_OUTPUT_TOKENS == 24_000
-    assert body["reasoning_effort"] == "low"
+    assert body["reasoning_effort"] == "high"
     assert "thinking" not in body
     assert "Complete JSON Schema" in body["messages"][0]["content"]
     assert request.headers["user-agent"] == "rivian-service-intake-demo/0.1"

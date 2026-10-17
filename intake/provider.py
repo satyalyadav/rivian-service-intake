@@ -162,7 +162,7 @@ def request_extraction(
         "max_tokens": MAX_OUTPUT_TOKENS,
     }
     if settings.model.casefold() == "deepseek-v4.1-flash":
-        request_body["reasoning_effort"] = "low"
+        request_body["reasoning_effort"] = "high"
     encoded_request = json.dumps(request_body, ensure_ascii=False).encode("utf-8")
     if len(encoded_request) > MAX_REQUEST_BODY_BYTES or len(transcript) > MAX_TRANSCRIPT_CHARS:
         raise ProviderError("The request is too large to send to the model.")
